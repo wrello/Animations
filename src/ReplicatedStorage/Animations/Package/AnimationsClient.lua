@@ -15,13 +15,11 @@ local player = Players.LocalPlayer
 local Animations = AnimationsClass.new()
 Animations.TimeToLoadPrints = TIME_TO_LOAD_PRINTS
 
---[=[
-	@class AnimationsClient
-
-	A robust and easy to use module for playing & pre-loading animations on rigs in roblox.
-]=]
 local AnimationsClient = Animations
 
+--[[
+	@yields
+]]
 function AnimationsClient:Init()
 	-- Creates two versions of each method in the AnimationsClass module, one for the LocalPlayer to use on themselves, and one for them to use on a rig
 	
