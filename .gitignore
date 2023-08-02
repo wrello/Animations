@@ -6,3 +6,6 @@ rbxlx-to-rojo.log
 src/ServerStorage
 src/ServerScriptService
 build
+node_modules
+package-lock.json
+package.json
