@@ -82,7 +82,6 @@ function AnimationsClass.new()
 	self.Aliases = {}
 	self.AnimationInstancesCache = {}
 	self.IsRigLoaded = {}	
-	self.TimeToLoadPrints = true
 
 	self:_animationIdsToInstances()
 	self:_createInitializedAssertionFn()
@@ -244,7 +243,6 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rigType: stri
 	loadTracks(AnimationIds[rigType], self.LoadedTracks[rig])
 
 	self.IsRigLoaded[rig] = true
-	self.FinishedLoadingRigSignal:Fire(rig)
 
 	rig.Destroying:Connect(function() -- When the rig gets destroyed the animation tracks are no longer loaded
 		self.IsRigLoaded[rig] = false
@@ -253,6 +251,8 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rigType: stri
 	if self.TimeToLoadPrints then
 		print("Finished pre-loading animations for [", rig, "] -", os.clock()-s, "seconds taken")
 	end
+	
+	self.FinishedLoadingRigSignal:Fire(rig)
 end
 
 function AnimationsClass:GetTrack(player_or_rig: Player | Model, path: any): AnimationTrack?

@@ -23,6 +23,26 @@ local CustomAssert = require(script.Parent.Util.CustomAssert)
 ]=]
 type CustomRBXAnimationIdsType = Types.CustomRBXAnimationIdsType
 
+--[=[
+	@type path any
+	@within AnimationsServer
+	
+	```lua
+	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
+	
+	
+	-- These are all valid options for retrieving an animation track
+	local animationPath = "Jump" -- A single key (any type)
+	
+	local animationPath = {"Dodge", Vector3.xAxis} -- An array path (values of any type)
+
+	local animationPath = "Climb.Right" -- A path seperated by "." (string)
+
+
+	local animationTrack = Animations:GetTrack(player, animationPath)
+	```
+]=]
+
 local ASSET_ID_STR = "rbxassetid://%f"
 
 local Animations = AnimationsClass.new()
@@ -34,12 +54,16 @@ local Animations = AnimationsClass.new()
 local AnimationsServer = Animations
 
 --[=[
-	@prop AutoLoadTracks false
+	@prop AutoLoadPlayerTracks false
 	@within AnimationsServer
 
 	If set to true, player animation tracks will be loaded for each player character on spawn.
+	
+	:::warning
+	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
+	:::
 ]=]
-AnimationsServer.AutoLoadTracks = false
+AnimationsServer.AutoLoadPlayerTracks = false
 
 --[=[
 	@prop TimeToLoadPrints true
@@ -81,7 +105,7 @@ function AnimationsServer:Init()
 				self:ApplyCustomRBXAnimationIds(player, AutoCustomRBXAnimationIds)
 			end
 			
-			if self.AutoLoadTracks then 
+			if self.AutoLoadPlayerTracks then 
 				self:LoadTracks(player, "Player") 
 			end
 		end
@@ -106,9 +130,29 @@ end
 	@param player Player
 	@param customRBXAnimationIds customRBXAnimationIds
 
-	Applies the animation ids specified in the given `customRBXAnimationIds` table on the given `player`'s character. Yields if the `player`'s character, humanoid, animator, or animate script aren't immediately available.
+	Applies the animation ids specified in the given [`customRBXAnimationIds`](#customRBXAnimationIds) table on the given `player`'s character. Yields if the `player`'s character, humanoid, animator, or animate script aren't immediately available.
+
+	```lua
+	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
+
+	Animations:Init()
+
+	task.wait(5)
+
+	print("Applying r15 ninja jump animation")
+
+	Animations:ApplyCustomRBXAnimationIds(game.Players.YourName, {
+		jump = 656117878, -- This is an r15 ninja jump animation
+	})
+	```
+
+	:::caution
+	Be aware that if the animation was created on a different `HumanoidRigType` than that of the player's character, the animation will not work. If you don't know what `HumanoidRigType` the player has, you can get around this by formatting the [`customRBXAnimationIds`](#customRBXAnimationIds) table like the [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) module table (with [Enum.HumanoidRigType] keys corresponding to animation ids created for that `HumanoidRigType`).
+	:::
 ]=]
 function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, customRBXAnimationIds: CustomRBXAnimationIdsType)
+	self:_initializedAssertion()
+	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
 	local animator = hum:WaitForChild("Animator")
@@ -118,8 +162,14 @@ function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, customRBXAn
 		track:Stop(0)
 	end
 	
+	local humRigTypeSupportedAnimationIds = customRBXAnimationIds[hum.RigType]
+	
+	if humRigTypeSupportedAnimationIds then
+		customRBXAnimationIds = humRigTypeSupportedAnimationIds
+	end
+	
 	for animName, animId in pairs(customRBXAnimationIds) do
-		for _, animInstance in ipairs(animateScript[animName]) do
+		for _, animInstance in ipairs(animateScript[animName]:GetChildren()) do
 			if type(animId) == "table" then
 				animInstance.AnimationId = ASSET_ID_STR:format(animId[animInstance.Name])
 			else
@@ -136,6 +186,22 @@ end
 	@param player_or_rig Player | Model
 	
 	Yields until the player or rig's animation tracks have loaded.
+	
+	```lua
+	-- [WARNING] For this to work you need animation ids under the rig type of "Player" in the 'AnimationIds' module
+	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
+
+	Animations:Init()
+
+	Animations.AutoLoadTracks = true
+	Animations.TimeToLoadPrints = true
+
+	local player = game.Players:WaitForChild("MyName")
+
+	Animations:AwaitLoaded(player)
+
+	print("Animation tracks finished loading on the server!")
+	```
 ]=]
 
 --[=[
@@ -161,7 +227,7 @@ end
 	@method GetTrack
 	@within AnimationsServer
 	@param player_or_rig Player | Model
-	@param path any
+	@param path path
 	@return AnimationTrack?
 	
 	Returns a player or rig's animation track or nil.
@@ -171,7 +237,7 @@ end
 	@method PlayTrack
 	@within AnimationsServer
 	@param player_or_rig Player | Model
-	@param path any
+	@param path path
 	@param fadeTime number?
 	@param weight number?
 	@param speed number?
@@ -184,7 +250,7 @@ end
 	@method StopTrack
 	@within AnimationsServer
 	@param player_or_rig Player | Model
-	@param path any
+	@param path path
 	@param fadeTime number?
 	@return AnimationTrack
 
@@ -230,7 +296,7 @@ end
 	@within AnimationsServer
 	@param player_or_rig Player | Model
 	@param alias any
-	@param path any
+	@param path path
 
 	Sets an alias to be the equivalent of the given path for a player or rig's animation track.
 ]=]

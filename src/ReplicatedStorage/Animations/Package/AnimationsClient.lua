@@ -9,6 +9,26 @@ local player = Players.LocalPlayer
 
 type AnimationsClientType = Types.AnimationsClientType
 
+--[=[
+	@type path any
+	@within AnimationsClient
+	
+	```lua
+	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
+	
+	
+	-- These are all valid options for retrieving an animation track
+	local animationPath = "Jump" -- A single key (any type)
+	
+	local animationPath = {"Dodge", Vector3.xAxis} -- An array path (values of any type)
+
+	local animationPath = "Climb.Right" -- A path seperated by "." (string)
+
+
+	local animationTrack = Animations:GetTrack(animationPath)
+	```
+]=]
+
 local Animations = AnimationsClass.new()
 
 --[=[
@@ -16,18 +36,22 @@ local Animations = AnimationsClass.new()
 	@client
 	
 	:::info
-	Any reference to "client animation tracks" is referring to animation ids found under [`rigType`](/api/AnimationIds#rigType) of "Player" in the [`AnimationIds`](/api/AnimationIds) module
+	Any reference to "client animation tracks" is referring to animation ids found under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module
 	:::
 ]=]
 local AnimationsClient = Animations
 
 --[=[
-	@prop AutoLoadTracks false
+	@prop AutoLoadPlayerTracks false
 	@within AnimationsClient
 
 	If set to true, client animation tracks will be loaded each time the client spawns.
+	
+	:::warning
+	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
+	:::
 ]=]
-AnimationsClient.AutoLoadTracks = false
+AnimationsClient.AutoLoadPlayerTracks = false
 
 --[=[
 	@prop TimeToLoadPrints true
@@ -85,14 +109,14 @@ function AnimationsClient:Init()
 
 	script.Parent.AnimationsServer:Destroy()
 
-	if self.AutoLoadTracks then
+	if self.AutoLoadPlayerTracks then
 		if player.Character then
 			self:LoadTracks()
 		end
 	end
 
 	player.CharacterAdded:Connect(function(char)
-		if self.AutoLoadTracks then
+		if self.AutoLoadPlayerTracks then
 			self:LoadTracks()
 		end
 	end)
@@ -150,7 +174,7 @@ end
 --[=[
 	@method GetTrack
 	@within AnimationsClient
-	@param path any
+	@param path path
 	@return AnimationTrack?
 	
 	Returns a client animation track or nil.
@@ -159,7 +183,7 @@ end
 	@method GetRigTrack
 	@within AnimationsClient
 	@param rig Model
-	@param path any
+	@param path path
 	@return AnimationTrack?
 	
 	Returns a rig animation track or nil.
@@ -168,7 +192,7 @@ end
 --[=[
 	@method PlayTrack
 	@within AnimationsClient
-	@param path any
+	@param path path
 	@param fadeTime number?
 	@param weight number?
 	@param speed number?
@@ -180,7 +204,7 @@ end
 	@method PlayRigTrack
 	@within AnimationsClient
 	@param rig Model
-	@param path any
+	@param path path
 	@param fadeTime number?
 	@param weight number?
 	@param speed number?
@@ -192,7 +216,7 @@ end
 --[=[
 	@method StopTrack
 	@within AnimationsClient
-	@param path any
+	@param path path
 	@param fadeTime number?
 	@return AnimationTrack
 
@@ -202,7 +226,7 @@ end
 	@method StopRigTrack
 	@within AnimationsClient
 	@param rig Model
-	@param path any
+	@param path path
 	@param fadeTime number?
 	@return AnimationTrack
 
@@ -275,7 +299,7 @@ end
 	@method SetTrackAlias
 	@within AnimationsClient
 	@param alias any
-	@param path any
+	@param path path
 
 	Sets an alias to be the equivalent of the given path for a client animation track.
 ]=]
@@ -284,7 +308,7 @@ end
 	@within AnimationsClient
 	@param rig Model
 	@param alias any
-	@param path any
+	@param path path
 
 	Sets an alias to be the equivalent of the given path for a rig animation track.
 ]=]
