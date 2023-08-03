@@ -60,11 +60,11 @@ function AnimationsClient:Init()
 	
 	for k, v in pairs(AnimationsClass) do
 		if type(v) == "function" and not k:match("^_") then
-			local playerMethodName = k
-			local rigMethodName = playerMethodName:gsub("^(%L[^%L]+)(%L[^%L]+)", "%1Rig%2")
+			local clientMethodName = k
+			local rigMethodName = clientMethodName:gsub("^(%L[^%L]+)(%L[^%L]+)", "%1Rig%2")
 			
-			if playerMethodName == "LoadTracks" then
-				self[playerMethodName] = function(self, ...)
+			if clientMethodName == "LoadTracks" then
+				self[clientMethodName] = function(self, ...)
 					return v(self, player, "Player", ...)
 				end
 				
@@ -72,7 +72,7 @@ function AnimationsClient:Init()
 					return v(self, rig, rigType, ...)
 				end
 			else
-				self[playerMethodName] = function(self, ...)
+				self[clientMethodName] = function(self, ...)
 					return v(self, player, ...)
 				end
 				
