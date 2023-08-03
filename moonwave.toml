@@ -20,8 +20,8 @@ onBrokenMarkdownLinks = "warn"
 tagline = "An easy to use module for playing and pre-loading animations"
 
 [[navbar.items]]
-href = "https://discord.gg/abcdefghijk"
-label = "Roblox Dev Forum"
+href = "https://devforum.roblox.com/t/animations-a-robust-easy-to-use-animation-player-pre-loader/2504740"
+label = "Roblox DevForum"
 position = "right"
 
 [footer]
@@ -32,5 +32,5 @@ copyright = "Built with Moonwave and Docusaurus"
 title = "Links"
 
 [[footer.links.items]]
-label = "Donate"
-href = "https://example.com/"
+label = "Support"
+href = "https://www.paypal.com/paypalme/isaacpalmr"
