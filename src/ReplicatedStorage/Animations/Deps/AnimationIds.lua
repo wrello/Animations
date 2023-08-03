@@ -91,13 +91,8 @@ type AnimationIdsType = Types.AnimationIdsType
 	Roblox model path: `Animations.Deps.AnimationIds`
 	:::
 ]=]
--- In ReplicatedStorage.Animations.Deps.AnimationIds
-local ninjaJumpR15AnimationId = 656117878
-
 local AnimationIds = {
-	Player = { -- Rig type of "Player" (required for any animations that will run on player characters)
-		Jump = ninjaJumpR15AnimationId -- Path of "Jump"
-	}
+	
 }
 
 return AnimationIds :: AnimationIdsType
