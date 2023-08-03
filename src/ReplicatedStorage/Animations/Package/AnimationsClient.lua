@@ -7,7 +7,15 @@ local AnimationsClass = require(script.Parent.Util.AnimationsClass)
 
 local player = Players.LocalPlayer
 
-type AnimationsClientType = Types.AnimationsClientType
+--[=[
+	@interface initOptions
+	@within AnimationsClient
+	.AutoLoadPlayerTracks boolean -- Defaults to false
+	.TimeToLoadPrints boolean -- Defaults to true (on the client)
+	
+	Gets applied to [`Properties`](#properties).
+]=]
+type AnimationsClientInitOptionsType = Types.AnimationsClientInitOptionsType
 
 --[=[
 	@type path any
@@ -35,11 +43,15 @@ local Animations = AnimationsClass.new()
 	@class AnimationsClient
 	@client
 	
+	:::note
+	Roblox model path: `Animations.Package.AnimationsClient`
+	:::
+	
 	:::info
 	Any reference to "client animation tracks" is referring to animation ids found under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module
 	:::
 ]=]
-local AnimationsClient = Animations
+local AnimationsClient = Animations :: Types.AnimationsClientType
 
 --[=[
 	@prop AutoLoadPlayerTracks false
@@ -67,6 +79,7 @@ AnimationsClient.TimeToLoadPrints = true
 
 --[=[
 	@yields
+	@param initOptions initOptions?
 
 	Initializes `AnimationsClient`. Yields if [`AnimationsClient.AutoLoadTracks`](#AutoLoadTracks) is set to true and the player's character already exists.
 
@@ -74,13 +87,21 @@ AnimationsClient.TimeToLoadPrints = true
 	Should be called once before any other method.
 	:::
 ]=]
-function AnimationsClient:Init()
+function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 	if self._initialized then
 		warn("AnimationsClient:Init() only needs to be called once")
 		return
 	end
 
 	self._initialized = true
+	
+	if initOptions.AutoLoadPlayerTracks ~= nil then
+		self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
+	end
+	
+	if initOptions.TimeToLoadPrints ~= nil then
+		self.TimeToLoadPrints = initOptions.TimeToLoadPrints
+	end
 	
 	for k, v in pairs(AnimationsClass) do
 		if type(v) == "function" and not k:match("^_") then
@@ -329,4 +350,4 @@ end
 	Removes the alias for a rig animation track.
 ]=]
 
-return AnimationsClient :: AnimationsClientType
+return AnimationsClient

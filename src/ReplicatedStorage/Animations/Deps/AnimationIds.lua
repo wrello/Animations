@@ -86,10 +86,17 @@ type AnimationIdsType = Types.AnimationIdsType
 --[=[
 	@tag Read Only
 	@class AnimationIds
+	
+	:::note
+	Roblox model path: `Animations.Deps.AnimationIds`
+	:::
 ]=]
+-- In ReplicatedStorage.Animations.Deps.AnimationIds
+local ninjaJumpR15AnimationId = 656117878
+
 local AnimationIds = {
-	Player = {
-		Jump = 656117878
+	Player = { -- Rig type of "Player" (required for any animations that will run on player characters)
+		Jump = ninjaJumpR15AnimationId -- Path of "Jump"
 	}
 }
 

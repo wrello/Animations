@@ -8,6 +8,17 @@ local AnimationsClass = require(script.Parent.Util.AnimationsClass)
 local CustomAssert = require(script.Parent.Util.CustomAssert)
 
 --[=[
+	@interface initOptions
+	@within AnimationsServer
+	.AutoLoadPlayerTracks boolean -- Defaults to false
+	.TimeToLoadPrints boolean -- Defaults to true (on the client)
+	.AutoCustomRBXAnimationIds boolean -- Defaults to false
+	
+	Gets applied to [`Properties`](#properties).
+]=]
+type AnimationsServerInitOptionsType = Types.AnimationsServerInitOptionsType
+
+--[=[
 	@interface customRBXAnimationIds
 	@within AnimationsServer
 	.run number?
@@ -50,8 +61,12 @@ local Animations = AnimationsClass.new()
 --[=[
 	@class AnimationsServer
 	@server
+	
+	:::note
+	Roblox model path: `Animations.Package.AnimationsServer`
+	:::
 ]=]
-local AnimationsServer = Animations
+local AnimationsServer = Animations :: Types.AnimationsServerType
 
 --[=[
 	@prop AutoLoadPlayerTracks false
@@ -83,19 +98,34 @@ AnimationsServer.TimeToLoadPrints = false
 AnimationsServer.EnableAutoCustomRBXAnimationIds = false
 
 --[=[
+	@param initOptions initOptions?
+
 	Initializes `AnimationsServer`.
 	
 	:::info
 	Should be called once before any other method.
 	:::
 ]=]
-function AnimationsServer:Init()
+function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	if self._initialized then
 		warn("AnimationsServer:Init() only needs to be called once")
 		return
 	end
 	
 	self._initialized = true
+	
+
+	if initOptions.AutoLoadPlayerTracks ~= nil then
+		self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
+	end
+
+	if initOptions.TimeToLoadPrints ~= nil then
+		self.TimeToLoadPrints = initOptions.TimeToLoadPrints
+	end
+
+	if initOptions.AutoCustomRBXAnimationIds ~= nil then
+		self.AutoCustomRBXAnimationIds = initOptions.AutoCustomRBXAnimationIds
+	end
 	
 	local function onPlayerAdded(player)
 		local function onCharacterAdded(char)
@@ -310,4 +340,4 @@ end
 	Removes the alias for a player or rig's animation track.
 ]=]
 
-return AnimationsServer :: Types.AnimationsServerType
+return AnimationsServer

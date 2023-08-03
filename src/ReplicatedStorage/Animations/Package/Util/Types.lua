@@ -1,8 +1,3 @@
-type sharedProperties = {
-	AutoLoadTracks: boolean,
-	TimeToLoadPrints: boolean
-}
-
 export type AnimationsClientType = {
 	AwaitLoaded: (self: AnimationsClientType) -> (),
 	AwaitRigLoaded: (self: AnimationsClientType, rig: Model) -> (),
@@ -36,15 +31,9 @@ export type AnimationsClientType = {
 
 	RemoveTrackAlias: (self: AnimationsClientType, alias: any) -> (),
 	RemoveRigTrackAlias: (self: AnimationsClientType, rig: Model, alias: any) -> (),
-
-	Init: (self: AnimationsClientType) -> ()
-} & sharedProperties
+}
 
 export type AnimationsServerType = {
-	EnableAutoCustomRBXAnimationIds: boolean,
-	
-	ApplyCustomRBXAnimationIds: (self: AnimationsServerType, player: Player, customRBXAnimationIds: CustomRBXAnimationIdsType) -> (),
-	
 	AwaitLoaded: (self: AnimationsServerType, player_or_model: Player | Model) -> (),
 
 	AreTracksLoaded: (self: AnimationsServerType, player_or_model: Player | Model) -> boolean,
@@ -66,9 +55,7 @@ export type AnimationsServerType = {
 	SetTrackAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any, path: any) -> (),
 
 	RemoveTrackAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any) -> (),
-
-	Init: (self: AnimationsServerType) -> ()
-} & sharedProperties
+}
 
 export type CustomRBXAnimationIdsType = {
 	[EnumItem]: {
@@ -92,5 +79,14 @@ type idTable = {
 export type AnimationIdsType = {
 	[rigType]: idTable
 }
+
+export type AnimationsClientInitOptionsType = {
+	AutoLoadPlayerTracks: boolean,
+	TimeToLoadPrints: boolean,
+}
+
+export type AnimationsServerInitOptionsType = {
+	AutoCustomRBXAnimationIds: boolean
+} & AnimationsClientInitOptionsType
 
 return {}

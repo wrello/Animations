@@ -5,6 +5,10 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 	@tag Server Only
 	@class AutoCustomRBXAnimationIds
 	
+	:::note
+	Roblox model path: `Animations.Deps.AutoCustomRBXAnimationIds`
+	:::
+	
 	A table of animation ids to apply to player character's animate script, replacing default roblox animation ids on spawn if [`EnableAutoCustomRBXAnimationIds`](/api/AnimationsServer#EnableAutoCustomRBXAnimationIds) is enabled.
 	
 	```lua

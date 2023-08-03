@@ -1,8 +1,36 @@
+title = "Animations"
 gitRepoUrl = "https://github.com/wrello/Animations"
 
+gitSourceBranch = "master"
+changelog = true
 classOrder = [
-	"AnimationsClient",
-	"AnimationsServer",
+    "AnimationsClient",
+    "AnimationsServer",
     "AnimationIds",
     "AutoCustomRBXAnimationIds"
 ]
+
+[home]
+enabled = true
+includeReadme = false
+
+[docusaurus]
+onBrokenLinks = "throw"
+onBrokenMarkdownLinks = "warn"
+tagline = "An easy to use module for playing and pre-loading animations"
+
+[[navbar.items]]
+href = "https://discord.gg/abcdefghijk"
+label = "Roblox Dev Forum"
+position = "right"
+
+[footer]
+style = "dark"
+copyright = "Built with Moonwave and Docusaurus"
+
+[[footer.links]]
+title = "Links"
+
+[[footer.links.items]]
+label = "Donate"
+href = "https://example.com/"
