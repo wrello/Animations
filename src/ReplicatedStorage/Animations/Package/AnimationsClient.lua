@@ -1,10 +1,5 @@
 -- made by wrello
 
---//
-local TIME_TO_LOAD_PRINTS = false
-local AUTO_LOAD_ON_PLAYER_SPAWN = true -- If set to true, animations will be loaded/pre-loaded each time the local player spawns
---//
-
 local Players = game:GetService("Players")
 
 local Types = require(script.Parent.Util.Types)
@@ -12,31 +7,56 @@ local AnimationsClass = require(script.Parent.Util.AnimationsClass)
 
 local player = Players.LocalPlayer
 
-local Animations = AnimationsClass.new()
-Animations.TimeToLoadPrints = TIME_TO_LOAD_PRINTS
+type AnimationsClientType = Types.AnimationsClientType
 
+local Animations = AnimationsClass.new()
+
+--[=[
+	@class AnimationsClient
+	@client
+	
+	:::info
+	Any reference to "client animation tracks" is referring to animation ids found under [`rigType`](/api/AnimationIds#rigType) of "Player" in the [`AnimationIds`](/api/AnimationIds) module
+	:::
+]=]
 local AnimationsClient = Animations
 
---[[
+--[=[
+	@prop AutoLoadTracks false
+	@within AnimationsClient
+
+	If set to true, client animation tracks will be loaded each time the client spawns.
+]=]
+AnimationsClient.AutoLoadTracks = false
+
+--[=[
+	@prop TimeToLoadPrints true
+	@within AnimationsClient
+
+	If set to true, prints will be made on each call to [`AnimationsClient:LoadTracks()`](#LoadTracks) to indicate the start, stop and elapsed time of pre-loading the client animation tracks.
+
+	:::caution
+	It is suggested to keep this as true because a lot of client animation tracks results in a significant yield time which is difficult to debug if forgotten.
+	:::
+]=]
+AnimationsClient.TimeToLoadPrints = true
+
+--[=[
 	@yields
-]]
+
+	Initializes `AnimationsClient`. Yields if [`AnimationsClient.AutoLoadTracks`](#AutoLoadTracks) is set to true and the player's character already exists.
+
+	:::info
+	Should be called once before any other method.
+	:::
+]=]
 function AnimationsClient:Init()
-	-- Creates two versions of each method in the AnimationsClass module, one for the LocalPlayer to use on themselves, and one for them to use on a rig
-	
-	-- Example 1 - 'AnimationsClass:LoadTracks()'
-	
-	-- ORIGINAL DOCUMENTED VERSION - AnimationsClass:LoadTracks(player_or_rig: Player | Model, rig_type: String)
-	
-	-- Client version 1 - AnimationsClient:LoadTracks() -- Loads the LocalPlayer's animation tracks
-	-- Client version 2 - AnimationsClient:LoadRigTracks(rig: Model, rig_type: String) -- Loads a rig's animation tracks
-	
-	
-	-- Example 2 - 'AnimationsClass:PlayTrack()'
-	
-	-- ORIGINAL DOCUMENTED VERSION - Animations:PlayTrack(player_or_rig: Player | Model, path: any, fadeTime: number?, weight: number?, speed: number?)
-	
-	-- Client version 1 - AnimationsClient:PlayTrack(path: any, fadeTime: number?, weight: number?, speed: number?) -- Plays the animation track found at 'path' for the LocalPlayer
-	-- Client version 2 - AnimationsClient:PlayRigTrack(rig: Model, path: any, fadeTime: number?, weight: number?, speed: number?) -- Plays the animation track found at 'path' for the given 'rig'
+	if self._initialized then
+		warn("AnimationsClient:Init() only needs to be called once")
+		return
+	end
+
+	self._initialized = true
 	
 	for k, v in pairs(AnimationsClass) do
 		if type(v) == "function" and not k:match("^_") then
@@ -48,8 +68,8 @@ function AnimationsClient:Init()
 					return v(self, player, "Player", ...)
 				end
 				
-				self[rigMethodName] = function(self, rig, rig_type, ...)
-					return v(self, rig, rig_type, ...)
+				self[rigMethodName] = function(self, rig, rigType, ...)
+					return v(self, rig, rigType, ...)
 				end
 			else
 				self[playerMethodName] = function(self, ...)
@@ -65,17 +85,224 @@ function AnimationsClient:Init()
 
 	script.Parent.AnimationsServer:Destroy()
 
-	if not AUTO_LOAD_ON_PLAYER_SPAWN then 
-		return
-	end
-
-	if player.Character then
-		self:LoadTracks()
+	if self.AutoLoadTracks then
+		if player.Character then
+			self:LoadTracks()
+		end
 	end
 
 	player.CharacterAdded:Connect(function(char)
-		self:LoadTracks()
+		if self.AutoLoadTracks then
+			self:LoadTracks()
+		end
 	end)
 end
 
-return AnimationsClient :: Types.AnimationsClientType
+--[=[
+	@method AwaitLoaded
+	@yields
+	@within AnimationsClient
+	
+	Yields until the client animation tracks have loaded.
+]=]
+--[=[
+	@method AwaitRigLoaded
+	@yields
+	@within AnimationsClient
+	@param rig Model
+	
+	Yields until the rig animation tracks have loaded.
+]=]
+
+--[=[
+	@method AreTracksLoaded
+	@within AnimationsClient
+	@return boolean
+	
+	Returns if the client has had its animation tracks loaded.
+]=]
+--[=[
+	@method AreRigTracksLoaded
+	@within AnimationsClient
+	@param rig Model
+	@return boolean
+	
+	Returns if the rig has had its animation tracks loaded.
+]=]
+
+--[=[
+	@method LoadTracks
+	@within AnimationsClient
+	@yields
+	
+	Yields while client animation tracks load.
+]=]
+--[=[
+	@method LoadRigTracks
+	@within AnimationsClient
+	@yields
+	@param rig Model
+	@param rigType string
+	
+	Yields while the rig animation tracks load.
+]=]
+
+--[=[
+	@method GetTrack
+	@within AnimationsClient
+	@param path any
+	@return AnimationTrack?
+	
+	Returns a client animation track or nil.
+]=]
+--[=[
+	@method GetRigTrack
+	@within AnimationsClient
+	@param rig Model
+	@param path any
+	@return AnimationTrack?
+	
+	Returns a rig animation track or nil.
+]=]
+
+--[=[
+	@method PlayTrack
+	@within AnimationsClient
+	@param path any
+	@param fadeTime number?
+	@param weight number?
+	@param speed number?
+	@return AnimationTrack
+
+	Returns a playing client animation track.
+]=]
+--[=[
+	@method PlayRigTrack
+	@within AnimationsClient
+	@param rig Model
+	@param path any
+	@param fadeTime number?
+	@param weight number?
+	@param speed number?
+	@return AnimationTrack
+
+	Returns a playing rig animation track.
+]=]
+
+--[=[
+	@method StopTrack
+	@within AnimationsClient
+	@param path any
+	@param fadeTime number?
+	@return AnimationTrack
+
+	Returns a stopped client animation track.
+]=]
+--[=[
+	@method StopRigTrack
+	@within AnimationsClient
+	@param rig Model
+	@param path any
+	@param fadeTime number?
+	@return AnimationTrack
+
+	Returns a stopped rig animation track.
+]=]
+
+--[=[
+	@method GetTrackFromAlias
+	@within AnimationsClient
+	@param alias any
+	@return AnimationTrack?
+
+	Returns a client animation track or nil.
+]=]
+--[=[
+	@method GetRigTrackFromAlias
+	@within AnimationsClient
+	@param rig Model
+	@param alias any
+	@return AnimationTrack?
+
+	Returns a rig animation track or nil.
+]=]
+
+--[=[
+	@method PlayTrackFromAlias
+	@within AnimationsClient
+	@param alias any
+	@param fadeTime number?
+	@param weight number?
+	@param speed number?
+	@return AnimationTrack
+
+	Returns a playing client animation track.
+]=]
+--[=[
+	@method PlayRigTrackFromAlias
+	@within AnimationsClient
+	@param rig Model
+	@param alias any
+	@param fadeTime number?
+	@param weight number?
+	@param speed number?
+	@return AnimationTrack
+
+	Returns a playing rig animation track.
+]=]
+
+--[=[
+	@method StopTrackFromAlias
+	@within AnimationsClient
+	@param alias any
+	@param fadeTime number?
+	@return AnimationTrack
+
+	Returns a stopped client animation track.
+]=]
+--[=[
+	@method StopRigTrackFromAlias
+	@within AnimationsClient
+	@param rig Model
+	@param alias any
+	@param fadeTime number?
+	@return AnimationTrack
+
+	Returns a stopped rig animation track.
+]=]
+
+--[=[
+	@method SetTrackAlias
+	@within AnimationsClient
+	@param alias any
+	@param path any
+
+	Sets an alias to be the equivalent of the given path for a client animation track.
+]=]
+--[=[
+	@method SetRigTrackAlias
+	@within AnimationsClient
+	@param rig Model
+	@param alias any
+	@param path any
+
+	Sets an alias to be the equivalent of the given path for a rig animation track.
+]=]
+
+--[=[
+	@method RemoveTrackAlias
+	@within AnimationsClient
+	@param alias any
+
+	Removes the alias for a client animation track.
+]=]
+--[=[
+	@method RemoveRigTrackAlias
+	@within AnimationsClient
+	@param rig Model
+	@param alias any
+
+	Removes the alias for a rig animation track.
+]=]
+
+return AnimationsClient :: AnimationsClientType

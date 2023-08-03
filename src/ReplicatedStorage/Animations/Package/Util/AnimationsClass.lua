@@ -2,6 +2,7 @@
 
 local Players = game:GetService("Players")
 local ContentProvider = game:GetService("ContentProvider")
+local RunService = game:GetService("RunService")
 
 local AnimationIds = require(script.Parent.Parent.Parent.Deps.AnimationIds)
 local Signal = require(script.Parent.Signal)
@@ -39,7 +40,6 @@ AnimationsClass.__index = AnimationsClass
 --------------------
 -- INITIALIZATION --
 --------------------
-
 function AnimationsClass:_animationIdsToInstances()
 	local function loadAnimations(idTable, currentSet)
 		for animationName, animationId in pairs(idTable) do
@@ -57,10 +57,23 @@ function AnimationsClass:_animationIdsToInstances()
 	end
 end
 
+function AnimationsClass:_createInitializedAssertionFn()
+	local instanceName
+
+	if RunService:IsServer() then
+		instanceName = "AnimationsServer"
+	else
+		instanceName = "AnimationsClient"
+	end
+	
+	self._initializedAssertion = function()
+		assert(self._initialized, "Call " .. instanceName .. ":Init() before calling any methods")
+	end
+end
+	
 -----------------
 -- CONSTRUCTOR --
 -----------------
-
 function AnimationsClass.new()
 	local self = setmetatable({}, AnimationsClass)
 
@@ -72,6 +85,7 @@ function AnimationsClass.new()
 	self.TimeToLoadPrints = true
 
 	self:_animationIdsToInstances()
+	self:_createInitializedAssertionFn()
 
 	return self :: AnimationsClassType
 end
@@ -92,19 +106,19 @@ function AnimationsClass:_getTrack(player_or_rig, path, isAlias)
 		parent = self.LoadedTracks[rig]
 	end
 
-	local firstKey = path
+	--local firstKey = path
 
-	if typeof(path) == "table" then
-		if #path > 1 then
-			firstKey = path[1]
-		end
-	else
-		if path:match("%.") then
-			firstKey = path:match("^[^%.]+")
-		end
-	end
+	--if typeof(path) == "table" then
+	--	if #path > 1 then
+	--		firstKey = path[1]
+	--	end
+	--else
+	--	if path:match("%.") then
+	--		firstKey = path:match("^[^%.]+")
+	--	end
+	--end
 
-	CustomAssert(parent and parent[firstKey], "no track or table found under path [", path, "] for player or rig [", player_or_rig:GetFullName(), "]")
+	--CustomAssert(parent, "no track or table found under path [", path, "] for player or rig [", player_or_rig:GetFullName(), "]")
 	
 	local track_or_table = ChildFromPath(parent, path)
 
@@ -114,7 +128,7 @@ end
 function AnimationsClass:_playStopTrack(play_stop, player_or_rig, path, isAlias, fadeTime, weight, speed)
 	local track = self:_getTrack(player_or_rig, path, isAlias)
 
-	CustomAssert(track, "no track found under path [", path, "]", "for [", player_or_rig:GetFullName(), "]")
+	CustomAssert(track, "No track found under path [", path, "]", "for [", player_or_rig:GetFullName(), "]")
 
 	track[play_stop](track, fadeTime, weight, speed)
 
@@ -136,7 +150,7 @@ function AnimationsClass:_setTrackAlias(player_or_rig, alias, path)
 
 	local track_or_table = self:_getTrack(player_or_rig, modifiedPath) or self:_getTrack(player_or_rig, path)	
 
-	CustomAssert(track_or_table, "no track or table found under path [", path, "] with alias [", alias, "] for [", player_or_rig:GetFullName(), "]")
+	CustomAssert(track_or_table, "No track or table found under path [", path, "] with alias [", alias, "] for [", player_or_rig:GetFullName(), "]")
 	
 	if not self.Aliases[player_or_rig] then
 		self.Aliases[player_or_rig] = {}
@@ -149,12 +163,33 @@ function AnimationsClass:_removeTrackAlias(player_or_rig, alias)
 	self.Aliases[player_or_rig][alias] = nil
 end
 
+function AnimationsClass:_getAnimatorOrAnimationController(player_or_rig, rig)
+	local animator_or_animation_controller
+
+	local hum = player_or_rig:IsA("Player") and rig:WaitForChild("Humanoid") or rig:FindFirstChild("Humanoid")
+
+	if hum then
+		animator_or_animation_controller = hum:FindFirstChild("Animator")
+
+		if not animator_or_animation_controller then
+			animator_or_animation_controller = Instance.new("Animator")
+			animator_or_animation_controller.Parent = hum
+		end
+	else
+		animator_or_animation_controller = rig:FindFirstChild("AnimationController")
+	end
+
+	CustomAssert(animator_or_animation_controller, "No animator or animation controller found [", rig:GetFullName(), "]")
+	
+	return animator_or_animation_controller
+end
+
 -------------
 -- PUBLIC --
 -------------
-
--- Yields until the player or rig's animation tracks have loaded
 function AnimationsClass:AwaitLoaded(player_or_rig: Player | Model)
+	self._initializedAssertion()
+	
 	local rig = getRig(player_or_rig)
 
 	if not self.IsRigLoaded[rig] then
@@ -162,36 +197,23 @@ function AnimationsClass:AwaitLoaded(player_or_rig: Player | Model)
 	end
 end
 
--- Checks if the player or rig has had its animation tracks loaded
 function AnimationsClass:AreTracksLoaded(player_or_rig: Player | Model): boolean
+	self._initializedAssertion()
+	
 	return not not self.LoadedTracks[getRig(player_or_rig)]
 end
 
--- Yields while animations pre-load for the player or rig
-function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rig_type: string)
-	CustomAssert(AnimationIds[rig_type], "no animations found for [", player_or_rig:GetFullName(), "] under rig type [", rig_type, "]")
+function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rigType: string)
+	self._initializedAssertion()
+	
+	CustomAssert(AnimationIds[rigType], "No animations found for [", player_or_rig:GetFullName(), "] under rig type [", rigType, "]")
 
 	local rig = getRig(player_or_rig)
 
-	CustomAssert(not self.IsRigLoaded[rig], "animation tracks already loaded for [", rig:GetFullName(), "] !")
-
-	local animator, animationController
+	CustomAssert(not self.IsRigLoaded[rig], "Animation tracks already loaded for [", rig:GetFullName(), "] !")
 	
-	local hum = player_or_rig:IsA("Player") and rig:WaitForChild("Humanoid") or rig:FindFirstChild("Humanoid")
+	local animator_or_animation_controller = self:_getAnimatorOrAnimationController(player_or_rig, rig)
 	
-	if hum then
-		animator = hum:FindFirstChild("Animator")
-
-		if not animator then
-			animator = Instance.new("Animator")
-			animator.Parent = hum
-		end
-	else
-		animationController = rig:FindFirstChild("AnimationController")
-	end
-
-	CustomAssert(animator or animationController, "no animator or animation controller found [", rig:GetFullName(), "]")
-
 	local tracks = self.LoadedTracks[rig]
 
 	if not tracks then
@@ -214,12 +236,12 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rig_type: str
 				loadTracks(animation, currentSet[animationName])
 			else
 				ContentProvider:PreloadAsync({animation})
-				currentSet[animationName] = (animator or animationController):LoadAnimation(animation)
+				currentSet[animationName] = animator_or_animation_controller:LoadAnimation(animation)
 			end
 		end
 	end
 
-	loadTracks(AnimationIds[rig_type], self.LoadedTracks[rig])
+	loadTracks(AnimationIds[rigType], self.LoadedTracks[rig])
 
 	self.IsRigLoaded[rig] = true
 	self.FinishedLoadingRigSignal:Fire(rig)
@@ -233,43 +255,51 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rig_type: str
 	end
 end
 
--- Returns an animation track for the player or rig; no error if not found
 function AnimationsClass:GetTrack(player_or_rig: Player | Model, path: any): AnimationTrack?
+	self._initializedAssertion()
+	
 	return self:_getTrack(player_or_rig, path)
 end
 
--- Returns a playing animation track; errors if not found for the player or rig
 function AnimationsClass:PlayTrack(player_or_rig: Player | Model, path: any, fadeTime: number?, weight: number?, speed: number?): AnimationTrack
+	self._initializedAssertion()
+	
 	return self:_playStopTrack("Play", player_or_rig, path, false, fadeTime, weight, speed)
 end
 
--- Returns a stopped animation track; errors if not found for the player or rig
 function AnimationsClass:StopTrack(player_or_rig: Player | Model, path: any, fadeTime: number?): AnimationTrack
+	self._initializedAssertion()
+	
 	return self:_playStopTrack("Stop", player_or_rig, path, false, fadeTime)
 end
 
--- Returns an animation track for the player or rig; no error if not found
 function AnimationsClass:GetTrackFromAlias(player_or_rig: Player | Model, alias: any): AnimationTrack?
+	self._initializedAssertion()
+	
 	return self:_getTrack(player_or_rig, alias, true)
 end
 
--- Returns a playing animation track; errors if not found for the player or rig
 function AnimationsClass:PlayTrackFromAlias(player_or_rig: Player | Model, alias: any, fadeTime: number?, weight: number?, speed: number?): AnimationTrack
+	self._initializedAssertion()
+	
 	return self:_playStopTrack("Play", player_or_rig, alias, true, fadeTime, weight, speed)
 end
 
--- Returns a stopped animation track; errors if not found for the player or rig
 function AnimationsClass:StopTrackFromAlias(player_or_rig: Player | Model, alias: any, fadeTime: number?): AnimationTrack
+	self._initializedAssertion()
+	
 	return self:_playStopTrack("Stop", player_or_rig, alias, true, fadeTime)
 end
 
--- Sets an alias to be the equivalent of the given path for an animation track
 function AnimationsClass:SetTrackAlias(player_or_rig: Player | Model, alias: any, path: any)
+	self._initializedAssertion()
+	
 	self:_setTrackAlias(player_or_rig, alias, path)
 end
 
--- Removes the alias for an animation track for the player or rig
 function AnimationsClass:RemoveTrackAlias(player_or_rig: Player | Model, alias: any)
+	self._initializedAssertion()
+	
 	self:_removeTrackAlias(player_or_rig, alias)
 end
 
