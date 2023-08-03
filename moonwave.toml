@@ -1,0 +1,8 @@
+gitRepoUrl = "https://github.com/wrello/Animations"
+
+classOrder = [
+	"AnimationsClient",
+	"AnimationsServer",
+    "AnimationIds",
+    "AutoCustomRBXAnimationIds"
+]
