@@ -95,14 +95,16 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 
 	self._initialized = true
 	
-	if initOptions.AutoLoadPlayerTracks ~= nil then
-		self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
+	if initOptions then
+		if initOptions.AutoLoadPlayerTracks ~= nil then
+			self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
+		end
+
+		if initOptions.TimeToLoadPrints ~= nil then
+			self.TimeToLoadPrints = initOptions.TimeToLoadPrints
+		end
 	end
-	
-	if initOptions.TimeToLoadPrints ~= nil then
-		self.TimeToLoadPrints = initOptions.TimeToLoadPrints
-	end
-	
+
 	for k, v in pairs(AnimationsClass) do
 		if type(v) == "function" and not k:match("^_") then
 			local clientMethodName = k

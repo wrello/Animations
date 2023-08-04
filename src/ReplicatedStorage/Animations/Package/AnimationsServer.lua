@@ -114,19 +114,20 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	
 	self._initialized = true
 	
+	if initOptions then
+		if initOptions.AutoLoadPlayerTracks ~= nil then
+			self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
+		end
 
-	if initOptions.AutoLoadPlayerTracks ~= nil then
-		self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
+		if initOptions.TimeToLoadPrints ~= nil then
+			self.TimeToLoadPrints = initOptions.TimeToLoadPrints
+		end
+		
+		if initOptions.AutoCustomRBXAnimationIds ~= nil then
+			self.AutoCustomRBXAnimationIds = initOptions.AutoCustomRBXAnimationIds
+		end
 	end
 
-	if initOptions.TimeToLoadPrints ~= nil then
-		self.TimeToLoadPrints = initOptions.TimeToLoadPrints
-	end
-
-	if initOptions.AutoCustomRBXAnimationIds ~= nil then
-		self.AutoCustomRBXAnimationIds = initOptions.AutoCustomRBXAnimationIds
-	end
-	
 	local function onPlayerAdded(player)
 		local function onCharacterAdded(char)
 			local hum = char.Humanoid
