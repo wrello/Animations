@@ -12,7 +12,7 @@ classOrder = [
 
 [home]
 enabled = true
-includeReadme = false
+includeReadme = true
 
 [docusaurus]
 onBrokenLinks = "throw"
