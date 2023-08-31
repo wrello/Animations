@@ -182,7 +182,7 @@ end
 	:::
 ]=]
 function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, customRBXAnimationIds: CustomRBXAnimationIdsType)
-	self:_initializedAssertion()
+	self._initializedAssertion()
 	
 	local char = player.Character or player.CharacterAdded:Wait()
 	local hum = char:WaitForChild("Humanoid")
