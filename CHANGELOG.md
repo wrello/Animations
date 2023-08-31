@@ -4,7 +4,7 @@
 ----
 
 - Enhancements
-    - Added assertions to check `AnimationsClient` and `AnimationsServer` were being required on the server and client respectively [Issue #4](https://github.com/wrello/Animations/issues/4)
+    - Added assertions to check `AnimationsClient` and `AnimationsServer` were being required on the client and server respectively [Issue #4](https://github.com/wrello/Animations/issues/4)
 
 - Fixes
     - Fixed subsequent `Animations:AwaitLoaded()` calls getting discarded [Issue #5](https://github.com/wrello/Animations/issues/5)
