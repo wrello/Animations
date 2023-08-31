@@ -4,13 +4,13 @@
 ----
 
 - Enhancements
-    - [#4](github.com/wrello/Animations/issues/4)
+    - [#4](https://github.com/wrello/Animations/issues/4)
 
 - Fixes
-    - [#5](github.com/wrello/Animations/issues/5)
-    - [#3](github.com/wrello/Animations/issues/3)
-    - [#2](github.com/wrello/Animations/issues/2)
-    - [#1](github.com/wrello/Animations/issues/1)
+    - [#5](https://github.com/wrello/Animations/issues/5)
+    - [#3](https://github.com/wrello/Animations/issues/3)
+    - [#2](https://github.com/wrello/Animations/issues/2)
+    - [#1](https://github.com/wrello/Animations/issues/1)
 
 ## v1.0.1
 > ###### 8/3/2023
