@@ -1,5 +1,5 @@
 -- made by wrello
--- v1.0.0
+-- v1.0.1
 
 local Connection = {}
 Connection.__index = Connection
@@ -51,8 +51,10 @@ function Signal:Fire(...)
 	for _, waitingThread in ipairs(self._waitingThreads) do
 		task.spawn(waitingThread, ...)
 	end
-
-	for _, conn in ipairs(self._connections) do
+	
+	local clonedConnections = table.clone(self._connections) -- This is to prevent `Connection:Disconnect()` calls during the for loop modifing the table we're looping through
+	
+	for _, conn in ipairs(clonedConnections) do
 		if conn._isOnce then
 			conn:Disconnect()
 		end
