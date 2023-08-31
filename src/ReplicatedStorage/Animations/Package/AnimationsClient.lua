@@ -1,5 +1,7 @@
 -- made by wrello
 
+assert(game:GetService("RunService"):IsClient(), "Attempt to require AnimationsClient on the server")
+
 local Players = game:GetService("Players")
 
 local Types = require(script.Parent.Util.Types)
