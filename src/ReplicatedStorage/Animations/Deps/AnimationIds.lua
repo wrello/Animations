@@ -4,7 +4,7 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 	@type rigType string
 	@within AnimationIds
 	
-	The first key in the `AnimationId`s module that indicates the type of rig the paired animation id table belongs to.
+	The first key in the `AnimationIds` module that indicates the type of rig the paired animation id table belongs to.
 	
 	```lua
 	local AnimationIds = {

@@ -11,7 +11,7 @@ local CustomAssert = require(script.Parent.Util.CustomAssert)
 	@interface initOptions
 	@within AnimationsServer
 	.AutoLoadPlayerTracks boolean -- Defaults to false
-	.TimeToLoadPrints boolean -- Defaults to true (on the client)
+	.TimeToLoadPrints boolean -- Defaults to false (on the server)
 	.AutoCustomRBXAnimationIds boolean -- Defaults to false
 	
 	Gets applied to [`Properties`](#properties).
