@@ -4,7 +4,7 @@
 ----
 
 - Enhancements
-    - [`Animations:LoadTracks()`](/api/AnimationsClient#LoadTracks) now automatically gives the rig an attribute `"AnimationsRigType"` set to the given [`rigType`](/api/AnimationIds#rigType) (which is "Player" when the client calls it). [Issue #9](https://github.com/wrello/Animations/issues/9)
+    - [`Animations:LoadTracks()`](/api/AnimationsClient#LoadTracks) now automatically gives the rig an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType) (which is "Player" when the client calls it). [Issue #9](https://github.com/wrello/Animations/issues/9)
     - Explained a convenient feature when using [`Animations:SetTrackAlias()`](/api/AnimationsClient#SetTrackAlias) in the documentation of the function.
 
 - Fixes
