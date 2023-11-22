@@ -185,6 +185,10 @@ end
 	@yields
 	
 	Yields while client animation tracks load.
+
+	:::tip
+	Automatically gives the rig (the player's character) an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
+	:::
 ]=]
 --[=[
 	@method LoadRigTracks
@@ -194,6 +198,10 @@ end
 	@param rigType string
 	
 	Yields while the rig animation tracks load.
+
+	:::tip
+	Automatically gives the rig an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType).
+	:::
 ]=]
 
 --[=[

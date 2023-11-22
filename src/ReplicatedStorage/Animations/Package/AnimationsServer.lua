@@ -254,6 +254,10 @@ end
 	@param rigType string
 	
 	Yields while the player or rig's animation tracks load.
+
+	:::tip
+	Automatically gives the rig an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType).
+	:::
 ]=]
 
 --[=[
