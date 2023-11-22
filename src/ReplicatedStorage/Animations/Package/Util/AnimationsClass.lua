@@ -100,7 +100,7 @@ function AnimationsClass:_getTrack(player_or_rig, path, isAlias)
 	local parent
 
 	if isAlias then
-		parent = self.Aliases[rig]
+		parent = self.Aliases[player_or_rig]
 	else
 		parent = self.LoadedTracks[rig]
 	end
@@ -208,6 +208,8 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rigType: stri
 	CustomAssert(AnimationIds[rigType], "No animations found for [", player_or_rig:GetFullName(), "] under rig type [", rigType, "]")
 
 	local rig = getRig(player_or_rig)
+
+	rig:SetAttribute("AnimationsRigType", rigType)
 
 	CustomAssert(not self.IsRigLoaded[rig], "Animation tracks already loaded for [", rig:GetFullName(), "] !")
 	

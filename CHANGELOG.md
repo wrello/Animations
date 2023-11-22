@@ -1,3 +1,15 @@
+## v1.0.3
+> ###### 11/22/2023
+
+----
+
+- Enhancements
+    - `Animations:LoadTracks()` now automatically gives the rig an attribute "AnimationsRigType" set to the given `rigType` (which is "Player" when the client calls it automatically) [Issue #9](https://github.com/wrello/Animations/issues/9)
+
+- Fixes
+    - Fixed `Animations:GetTrackFromAlias()` not working [Issue #10](https://github.com/wrello/Animations/issues/10)
+    - Fixed `Util.ChildFromPath` bug that caused errors when the `parent` became nil during the recursion [Issue #7](https://github.com/wrello/Animations/issues/7)
+
 ## v1.0.2
 > ###### 8/31/2023
 

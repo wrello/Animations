@@ -1,7 +1,11 @@
 -- made by wrello
--- v1.0.0
+-- v1.0.1
 
 local function ChildFromPath(parent, path, index)
+	if parent == nil then
+		return nil
+	end
+	
 	if typeof(path) == "string" then -- A path string. Ex. "MyChild.MyDescendant" or "MyChild"
 		local childKey, period = path:match("^([^%.]+)(%.?)")
 
