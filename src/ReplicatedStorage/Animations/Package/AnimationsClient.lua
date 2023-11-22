@@ -327,6 +327,72 @@ end
 	@param path path
 
 	Sets an alias to be the equivalent of the given path for a client animation track.
+
+	:::tip
+	You can use the alias as the last key in the path. Useful for a table of animations. Example:
+
+	```lua
+	-- In ReplicatedStorage.Animations.Deps.AnimationIds
+	local animationIds = {
+		Player = {
+			FistsCombat = {
+				-- Fists 3 hit combo
+				Combo = {
+					[1] = 1234567,
+					[2] = 1234567,
+					[3] = 1234567
+				},
+
+				-- Fists heavy attack
+				HeavyAttack = 1234567
+			},
+
+			SwordCombat = {
+				-- Sword 3 hit combo
+				Combo = {
+					[1] = 1234567,
+					[2] = 1234567,
+					[3] = 1234567
+				},
+
+				-- Sword heavy attack
+				HeavyAttack = 1234567
+			}
+		}
+	}
+	```
+
+	```lua
+	-- In a LocalScript
+
+	-- After the client's animation tracks are loaded...
+
+	local heavyAttackAlias = "HeavyAttack" -- We want this alias in order to call Animations:PlayTrackFromAlias(heavyAttackAlias) regardless what weapon is equipped
+
+	local currentEquippedWeapon
+	
+	local function updateHeavyAttackAliasPath()
+		local alias = heavyAttackAlias
+		local path = currentEquippedWeapon .. "Combat"
+
+		Animations:SetTrackAlias(alias, path) -- Running this will search first "path.alias" and then search "path" if it didn't find "path.alias"
+	end
+
+	local function equipNewWeapon(weaponName)
+		currentEquippedWeapon = weaponName
+
+		updateHeavyAttackAliasPath()
+	end
+
+	equipNewWeapon("Fists")
+
+	Animations:PlayTrackFromAlias(heavyAttackAlias) -- Plays "FistsCombat.HeavyAttack" on the client's character
+
+	equipNewWeapon("Sword")
+
+	Animations:PlayTrackFromAlias(heavyAttackAlias) -- Plays "SwordCombat.HeavyAttack" on the client's character
+	```
+	:::
 ]=]
 --[=[
 	@method SetRigTrackAlias
@@ -336,6 +402,10 @@ end
 	@param path path
 
 	Sets an alias to be the equivalent of the given path for a rig animation track.
+
+	:::tip
+	Same tip for [`Animations:SetTrackAlias()`](#SetTrackAlias) applies here.
+	:::
 ]=]
 
 --[=[
