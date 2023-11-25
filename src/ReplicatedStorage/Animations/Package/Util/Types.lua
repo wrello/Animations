@@ -1,61 +1,75 @@
-export type AnimationsClientType = {
-	AwaitLoaded: (self: AnimationsClientType) -> (),
-	AwaitRigLoaded: (self: AnimationsClientType, rig: Model) -> (),
-
-	AreTracksLoaded: (self: AnimationsClientType) -> boolean,
-	AreRigTracksLoaded: (self: AnimationsClientType, rig: Model) -> boolean,
-
-	LoadTracks: (self: AnimationsClientType) -> (),
-	LoadRigTracks: (self: AnimationsClientType, rig: Model, rigType: string) -> (),
-
-	GetTrack: (self: AnimationsClientType, path: any) -> AnimationTrack?,
-	GetRigTrack: (self: AnimationsClientType, rig: Model, path: any) -> AnimationTrack?,
-
-	PlayTrack: (self: AnimationsClientType, path: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
-	PlayRigTrack: (self: AnimationsClientType, rig: Model, path: any, fadeTime: number?) -> AnimationTrack,
-
-	StopTrack: (self: AnimationsClientType, path: any, fadeTime: number?) -> AnimationTrack,
-	StopRigTrack: (self: AnimationsClientType, rig: Model, path: any, fadeTime: number?) -> AnimationTrack,
-
-	GetTrackFromAlias: (self: AnimationsClientType, alias: any) -> AnimationTrack?,
-	GetRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any) -> AnimationTrack?,
-
-	PlayTrackFromAlias: (self: AnimationsClientType, alias: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
-	PlayRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any, fadeTime: number?) -> AnimationTrack,
-
-	StopTrackFromAlias: (self: AnimationsClientType, alias: any, fadeTime: number?) -> AnimationTrack,
-	StopRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any, fadeTime: number?) -> AnimationTrack,
-
-	SetTrackAlias: (self: AnimationsClientType, alias: any, path: any) -> (),
-	SetRigTrackAlias: (self: AnimationsClientType, rig: Model, alias: any, path: any) -> (),
-
-	RemoveTrackAlias: (self: AnimationsClientType, alias: any) -> (),
-	RemoveRigTrackAlias: (self: AnimationsClientType, rig: Model, alias: any) -> (),
+type PrivateClientServerSharedType = {
+	_initialized: boolean,
+	_initializedAssertion: () -> (),
 }
+
+type PrivateAnimationsClientType = PrivateClientServerSharedType & AnimationsClientType
+type PrivateAnimationsServerType = PrivateClientServerSharedType & AnimationsServerType
 
 export type AnimationsServerType = {
-	AwaitLoaded: (self: AnimationsServerType, player_or_model: Player | Model) -> (),
+	AwaitLoaded: (self: PrivateAnimationsServerType, player_or_model: Player | Model) -> (),
 
-	AreTracksLoaded: (self: AnimationsServerType, player_or_model: Player | Model) -> boolean,
+	AreTracksLoaded: (self: PrivateAnimationsServerType, player_or_model: Player | Model) -> boolean,
 
-	LoadTracks: (self: AnimationsServerType, player_or_model: Player | Model, rigType: string) -> (),
+	LoadTracks: (self: PrivateAnimationsServerType, player_or_model: Player | Model, rigType: string) -> (),
 
-	GetTrack: (self: AnimationsServerType, player_or_model: Player | Model, path: any) -> AnimationTrack?,
+	GetTrack: (self: PrivateAnimationsServerType, player_or_model: Player | Model, path: any) -> AnimationTrack?,
 
-	PlayTrack: (self: AnimationsServerType, player_or_model: Player | Model, path: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
+	PlayTrack: (self: PrivateAnimationsServerType, player_or_model: Player | Model, path: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
 
-	StopTrack: (self: AnimationsServerType, player_or_model: Player | Model, path: any, fadeTime: number?) -> AnimationTrack,
+	StopTrack: (self: PrivateAnimationsServerType, player_or_model: Player | Model, path: any, fadeTime: number?) -> AnimationTrack,
 
-	GetTrackFromAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any) -> AnimationTrack?,
+	GetTrackFromAlias: (self: PrivateAnimationsServerType, player_or_model: Player | Model, alias: any) -> AnimationTrack?,
 
-	PlayTrackFromAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
+	PlayTrackFromAlias: (self: PrivateAnimationsServerType, player_or_model: Player | Model, alias: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
 
-	StopTrackFromAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any, fadeTime: number?) -> AnimationTrack,
+	StopTrackFromAlias: (self: PrivateAnimationsServerType, player_or_model: Player | Model, alias: any, fadeTime: number?) -> AnimationTrack,
 
-	SetTrackAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any, path: any) -> (),
+	SetTrackAlias: (self: PrivateAnimationsServerType, player_or_model: Player | Model, alias: any, path: any) -> (),
 
-	RemoveTrackAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any) -> (),
-}
+	RemoveTrackAlias: (self: PrivateAnimationsServerType, player_or_model: Player | Model, alias: any) -> (),
+	
+	ApplyCustomRBXAnimationIds: (self: PrivateAnimationsServerType, player: Player, customRBXAnimationIds: CustomRBXAnimationIdsType) -> (),
+	
+	Init: (self: PrivateAnimationsServerType, initOptions: AnimationsServerInitOptionsType?) -> ()	
+} & AnimationsServerInitOptionsType
+
+export type AnimationsClientType = {
+	AwaitLoaded: (self: PrivateAnimationsClientType) -> (),
+	AwaitRigLoaded: (self: PrivateAnimationsClientType, rig: Model) -> (),
+
+	AreTracksLoaded: (self: PrivateAnimationsClientType) -> boolean,
+	AreRigTracksLoaded: (self: PrivateAnimationsClientType, rig: Model) -> boolean,
+
+	LoadTracks: (self: PrivateAnimationsClientType) -> (),
+	LoadRigTracks: (self: PrivateAnimationsClientType, rig: Model, rigType: string) -> (),
+
+	GetTrack: (self: PrivateAnimationsClientType, path: any) -> AnimationTrack?,
+	GetRigTrack: (self: PrivateAnimationsClientType, rig: Model, path: any) -> AnimationTrack?,
+
+	PlayTrack: (self: PrivateAnimationsClientType, path: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
+	PlayRigTrack: (self: PrivateAnimationsClientType, rig: Model, path: any, fadeTime: number?) -> AnimationTrack,
+
+	StopTrack: (self: PrivateAnimationsClientType, path: any, fadeTime: number?) -> AnimationTrack,
+	StopRigTrack: (self: PrivateAnimationsClientType, rig: Model, path: any, fadeTime: number?) -> AnimationTrack,
+
+	GetTrackFromAlias: (self: PrivateAnimationsClientType, alias: any) -> AnimationTrack?,
+	GetRigTrackFromAlias: (self: PrivateAnimationsClientType, rig: Model, alias: any) -> AnimationTrack?,
+
+	PlayTrackFromAlias: (self: PrivateAnimationsClientType, alias: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
+	PlayRigTrackFromAlias: (self: PrivateAnimationsClientType, rig: Model, alias: any, fadeTime: number?) -> AnimationTrack,
+
+	StopTrackFromAlias: (self: PrivateAnimationsClientType, alias: any, fadeTime: number?) -> AnimationTrack,
+	StopRigTrackFromAlias: (self: PrivateAnimationsClientType, rig: Model, alias: any, fadeTime: number?) -> AnimationTrack,
+
+	SetTrackAlias: (self: PrivateAnimationsClientType, alias: any, path: any) -> (),
+	SetRigTrackAlias: (self: PrivateAnimationsClientType, rig: Model, alias: any, path: any) -> (),
+
+	RemoveTrackAlias: (self: PrivateAnimationsClientType, alias: any) -> (),
+	RemoveRigTrackAlias: (self: PrivateAnimationsClientType, rig: Model, alias: any) -> (),
+
+	Init: (self: PrivateAnimationsClientType, initOptions: AnimationsClientInitOptionsType?) -> ()	
+} & AnimationsClientInitOptionsType
 
 export type CustomRBXAnimationIdsType = {
 	[EnumItem]: {
@@ -86,7 +100,7 @@ export type AnimationsClientInitOptionsType = {
 }
 
 export type AnimationsServerInitOptionsType = {
-	AutoCustomRBXAnimationIds: boolean
+	EnableAutoCustomRBXAnimationIds: boolean
 } & AnimationsClientInitOptionsType
 
 return {}

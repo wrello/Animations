@@ -1,3 +1,17 @@
+## v1.0.4
+> ###### 11/22/2023
+
+----
+
+- Enhancements
+    - Put both client and server animation modules in `--!strict` mode. This allowed for a lot of typing fixes.
+    - Added a warning `Infinite yield possible on 'player_or_rig.CharacterAdded():Wait()'` that occurs whenever the `getRig()` helper function is called if the player's character doesn't exist after 5 seconds. This is helpful if `Players.CharacterAutoLoads` is not enabled and `getRig()` gets called.
+
+- Fixes
+    - Fixed `initOptions.AutoCustomRBXAnimationIds` not working because it was named incorrectly. New name is `initOptions.EnableAutoCustomRBXAnimationIds`. [AnimationsServer initOptions](/api/AnimationsServer/#initOptions)
+    - Fixed multiple references to the same animation id's table causing an error. [Issue #11](https://github.com/wrello/Animations/issues/11)
+    - Fixed incorrect types.
+
 ## v1.0.3
 > ###### 11/22/2023
 

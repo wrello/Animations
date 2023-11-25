@@ -11,7 +11,19 @@ local ChildFromPath = require(script.Parent.ChildFromPath)
 local CustomAssert = require(script.Parent.CustomAssert)
 
 local function getRig(player_or_rig)
-	return player_or_rig:IsA("Player") and (player_or_rig.Character or player_or_rig.CharacterAdded:Wait()) or player_or_rig
+	local playerCharacter 
+	
+	if player_or_rig:IsA("Player") then
+		task.delay(5, function()
+			if not playerCharacter then -- Can happen if `Players.CharacterAutoLoads` is disabled and this function gets called before it has a chance to load in
+				warn("Infinite yield possible on 'player_or_rig.CharacterAdded:Wait()'")
+			end
+		end)
+		
+		playerCharacter = player_or_rig.Character or player_or_rig.CharacterAdded:Wait()
+	end
+	
+	return playerCharacter or player_or_rig
 end
 
 local function clearTracks(currentSet)
@@ -46,8 +58,11 @@ function AnimationsClass:_animationIdsToInstances()
 			if type(animationId) == "table" then
 				loadAnimations(animationId, animationId)
 			else
-				self.AnimationInstancesCache[animationId] = self.AnimationInstancesCache[animationId] or createAnimationInstance(tostring(animationName), animationId)
-				currentSet[animationName] = self.AnimationInstancesCache[animationId]
+				if type(animationId) ~= "userdata" then -- The `animationId` was already turned into an animation instance (happens when multiple references to the same animation id table occur)
+					self.AnimationInstancesCache[animationId] = self.AnimationInstancesCache[animationId] or createAnimationInstance(tostring(animationName), animationId)
+
+					currentSet[animationName] = self.AnimationInstancesCache[animationId]
+				end
 			end
 		end
 	end
@@ -86,7 +101,7 @@ function AnimationsClass.new()
 	self:_animationIdsToInstances()
 	self:_createInitializedAssertionFn()
 
-	return self :: AnimationsClassType
+	return self
 end
 
 -------------

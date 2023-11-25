@@ -1,3 +1,4 @@
+--!strict
 -- made by wrello
 
 assert(game:GetService("RunService"):IsClient(), "Attempt to require AnimationsClient on the server")
@@ -107,7 +108,7 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 		end
 	end
 
-	for k, v in pairs(AnimationsClass) do
+	for k: string, v in pairs(AnimationsClass) do
 		if type(v) == "function" and not k:match("^_") then
 			local clientMethodName = k
 			local rigMethodName = clientMethodName:gsub("^(%L[^%L]+)(%L[^%L]+)", "%1Rig%2")

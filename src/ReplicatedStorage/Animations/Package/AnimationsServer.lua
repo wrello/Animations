@@ -1,3 +1,4 @@
+--!strict
 -- made by wrello
 
 assert(game:GetService("RunService"):IsServer(), "Attempt to require AnimationsServer on the client")
@@ -14,7 +15,7 @@ local CustomAssert = require(script.Parent.Util.CustomAssert)
 	@within AnimationsServer
 	.AutoLoadPlayerTracks boolean -- Defaults to false
 	.TimeToLoadPrints boolean -- Defaults to false (on the server)
-	.AutoCustomRBXAnimationIds boolean -- Defaults to false
+	.EnableAutoCustomRBXAnimationIds boolean -- Defaults to false
 	
 	Gets applied to [`Properties`](#properties).
 ]=]
@@ -125,14 +126,14 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 			self.TimeToLoadPrints = initOptions.TimeToLoadPrints
 		end
 		
-		if initOptions.AutoCustomRBXAnimationIds ~= nil then
-			self.AutoCustomRBXAnimationIds = initOptions.AutoCustomRBXAnimationIds
+		if initOptions.EnableAutoCustomRBXAnimationIds ~= nil then
+			self.EnableAutoCustomRBXAnimationIds = initOptions.EnableAutoCustomRBXAnimationIds
 		end
 	end
 
 	local function onPlayerAdded(player)
 		local function onCharacterAdded(char)
-			local hum = char.Humanoid
+			local hum = char:FindFirstChild("Humanoid")
 			
 			if self.EnableAutoCustomRBXAnimationIds then
 				self:ApplyCustomRBXAnimationIds(player, AutoCustomRBXAnimationIds)
@@ -187,8 +188,8 @@ function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, customRBXAn
 	self._initializedAssertion()
 	
 	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:WaitForChild("Humanoid")
-	local animator = hum:WaitForChild("Animator")
+	local hum = char:WaitForChild("Humanoid") :: Humanoid
+	local animator = hum:WaitForChild("Animator") :: Animator
 	local animateScript = char:WaitForChild("Animate")
 	
 	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
@@ -197,16 +198,20 @@ function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, customRBXAn
 	
 	local humRigTypeSupportedAnimationIds = customRBXAnimationIds[hum.RigType]
 	
-	if humRigTypeSupportedAnimationIds then
-		customRBXAnimationIds = humRigTypeSupportedAnimationIds
-	end
+	assert(humRigTypeSupportedAnimationIds, `No custom rbx animation ids found for rig type {hum.RigType}`)
 	
-	for animName, animId in pairs(customRBXAnimationIds) do
-		for _, animInstance in ipairs(animateScript[animName]:GetChildren()) do
-			if type(animId) == "table" then
-				animInstance.AnimationId = ASSET_ID_STR:format(animId[animInstance.Name])
-			else
-				animInstance.AnimationId = ASSET_ID_STR:format(animId)
+	for animName, animId in pairs(humRigTypeSupportedAnimationIds) do
+		local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
+
+		if rbxAnimInstancesContainer then
+			for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
+				local animInstance = animInstance :: Animation
+
+				if type(animId) == "table" then
+					animInstance.AnimationId = ASSET_ID_STR:format(animId[animInstance.Name])
+				else
+					animInstance.AnimationId = ASSET_ID_STR:format(animId)
+				end
 			end
 		end
 	end
