@@ -6,7 +6,7 @@
 - Fixes
     - Fixed all methods having no auto-complete (bad types). [Issue #12](https://github.com/wrello/Animations/issues/12)
     - Fixed missing weight and speed parameters for auto-complete in some methods (bad types). [Issue #13](https://github.com/wrello/Animations/issues/13)
-    - Fixed an overcomplicated private method `:_getAnimatorOrAnimationController()` in the `AnimationsClass`. Its new name is `:_getAnimator()`. [Issue #15](https://github.com/wrello/Animations/issues/15)
+    - Fixed an overcomplicated private method `:_getAnimatorOrAnimationController()` in the `AnimationsClass`. Its new name is `:_getAnimator()`. [Issue #14](https://github.com/wrello/Animations/issues/14)
 
 ## v1.0.4
 > ###### 11/22/2023
