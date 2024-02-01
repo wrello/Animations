@@ -54,7 +54,7 @@ local Animations = AnimationsClass.new()
 	Any reference to "client animation tracks" is referring to animation ids found under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module
 	:::
 ]=]
-local AnimationsClient = Animations :: Types.AnimationsClientType
+local AnimationsClient = Animations
 
 --[=[
 	@prop AutoLoadPlayerTracks false
@@ -433,4 +433,4 @@ end
 	Removes the alias for a rig animation track.
 ]=]
 
-return AnimationsClient
+return AnimationsClient :: Types.AnimationsClientType

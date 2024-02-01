@@ -53,22 +53,24 @@ AnimationsClass.__index = AnimationsClass
 -- INITIALIZATION --
 --------------------
 function AnimationsClass:_animationIdsToInstances()
-	local function loadAnimations(idTable, currentSet)
+	local function loadAnimations(idTable)
 		for animationName, animationId in pairs(idTable) do
 			if type(animationId) == "table" then
-				loadAnimations(animationId, animationId)
+				local nextIdTable = animationId
+				
+				loadAnimations(nextIdTable)
 			else
 				if type(animationId) ~= "userdata" then -- The `animationId` was already turned into an animation instance (happens when multiple references to the same animation id table occur)
 					self.AnimationInstancesCache[animationId] = self.AnimationInstancesCache[animationId] or createAnimationInstance(tostring(animationName), animationId)
 
-					currentSet[animationName] = self.AnimationInstancesCache[animationId]
+					idTable[animationName] = self.AnimationInstancesCache[animationId]
 				end
 			end
 		end
 	end
 
 	for _, animations in pairs(AnimationIds) do
-		loadAnimations(animations, animations)
+		loadAnimations(animations)
 	end
 end
 
@@ -177,25 +179,18 @@ function AnimationsClass:_removeTrackAlias(player_or_rig, alias)
 	self.Aliases[player_or_rig][alias] = nil
 end
 
-function AnimationsClass:_getAnimatorOrAnimationController(player_or_rig, rig)
-	local animator_or_animation_controller
+function AnimationsClass:_getAnimator(player_or_rig, rig)
+	local animatorParent = (player_or_rig:IsA("Player") and rig:WaitForChild("Humanoid")) or rig:FindFirstChild("Humanoid") or rig:FindFirstChild("AnimationController")
+	local animator = animatorParent:FindFirstChild("Animator")
 
-	local hum = player_or_rig:IsA("Player") and rig:WaitForChild("Humanoid") or rig:FindFirstChild("Humanoid")
-
-	if hum then
-		animator_or_animation_controller = hum:FindFirstChild("Animator")
-
-		if not animator_or_animation_controller then
-			animator_or_animation_controller = Instance.new("Animator")
-			animator_or_animation_controller.Parent = hum
-		end
-	else
-		animator_or_animation_controller = rig:FindFirstChild("AnimationController")
+	if not animator then
+		animator = Instance.new("Animator")
+		animator.Parent = animatorParent
 	end
 
-	CustomAssert(animator_or_animation_controller, "No animator or animation controller found [", rig:GetFullName(), "]")
-	
-	return animator_or_animation_controller
+	CustomAssert(animator, "No animator found [", rig:GetFullName(), "]")
+
+	return animator
 end
 
 -------------
@@ -228,7 +223,7 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rigType: stri
 
 	CustomAssert(not self.IsRigLoaded[rig], "Animation tracks already loaded for [", rig:GetFullName(), "] !")
 	
-	local animator_or_animation_controller = self:_getAnimatorOrAnimationController(player_or_rig, rig)
+	local animator = self:_getAnimator(player_or_rig, rig)
 	
 	local tracks = self.LoadedTracks[rig]
 
@@ -252,7 +247,7 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rigType: stri
 				loadTracks(animation, currentSet[animationName])
 			else
 				ContentProvider:PreloadAsync({animation})
-				currentSet[animationName] = animator_or_animation_controller:LoadAnimation(animation)
+				currentSet[animationName] = animator:LoadAnimation(animation)
 			end
 		end
 	end

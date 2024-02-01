@@ -69,7 +69,7 @@ local Animations = AnimationsClass.new()
 	Roblox model path: `Animations.Package.AnimationsServer`
 	:::
 ]=]
-local AnimationsServer = Animations :: Types.AnimationsServerType
+local AnimationsServer = Animations
 
 --[=[
 	@prop AutoLoadPlayerTracks false
@@ -419,4 +419,4 @@ end
 	Removes the alias for a player or rig's animation track.
 ]=]
 
-return AnimationsServer
+return AnimationsServer :: Types.AnimationsServerType
