@@ -1,8 +1,6 @@
 # Animations
 A robust and easy to use module for playing & pre-loading animations on rigs in roblox.
 
-![](.moonwave\static\images\AnimationsLogo.png)
-
 Website: https://wrello.github.io/Animations/ 
 
 | Install Type | Item |
