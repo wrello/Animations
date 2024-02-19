@@ -70,13 +70,10 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 		}
 	}
 	```
-<<<<<<< HEAD
 	
 	:::info
 	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
 	:::
-=======
->>>>>>> d78afcda05c002df9dfade5e6a8bab4ec561322e
 
 	:::caution
 	You should not delete the `key = nil` key-value pairs. They are meant to stay for ease of modification.
@@ -112,8 +109,4 @@ local AutoCustomRBXAnimationIds = {
 	}
 }
 
-<<<<<<< HEAD
 return AutoCustomRBXAnimationIds :: Types.HumanoidRigTypeToCustomRBXAnimationIdsType
-=======
-return AutoCustomRBXAnimationIds :: Types.CustomRBXAnimationIdsType
->>>>>>> d78afcda05c002df9dfade5e6a8bab4ec561322e
