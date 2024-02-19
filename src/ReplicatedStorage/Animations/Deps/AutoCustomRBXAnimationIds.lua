@@ -32,20 +32,20 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 	@tag Read Only
 	@server
 	@class AutoCustomRBXAnimationIds
-	
+
 	:::note
 	Roblox model path: `Animations.Deps.AutoCustomRBXAnimationIds`
 	:::
-	
+
 	A table of animation ids to apply to player character's animate script, replacing default roblox animation ids on spawn if [`EnableAutoCustomRBXAnimationIds`](/api/AnimationsServer#EnableAutoCustomRBXAnimationIds) is enabled.
-	
+
 	```lua
 	-- All optional number values
 	local AutoCustomRBXAnimationIds = {
 		[Enum.HumanoidRigType.R6] = { -- [string]: number? | { [string]: number? }
 			run = nil,
 			walk = nil,
-			jump = nil, 
+			jump = nil,
 			idle = {
 				Animation1 = nil,
 				Animation2 = nil
@@ -70,10 +70,13 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 		}
 	}
 	```
+<<<<<<< HEAD
 	
 	:::info
 	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
 	:::
+=======
+>>>>>>> d78afcda05c002df9dfade5e6a8bab4ec561322e
 
 	:::caution
 	You should not delete the `key = nil` key-value pairs. They are meant to stay for ease of modification.
@@ -109,4 +112,8 @@ local AutoCustomRBXAnimationIds = {
 	}
 }
 
+<<<<<<< HEAD
 return AutoCustomRBXAnimationIds :: Types.HumanoidRigTypeToCustomRBXAnimationIdsType
+=======
+return AutoCustomRBXAnimationIds :: Types.CustomRBXAnimationIdsType
+>>>>>>> d78afcda05c002df9dfade5e6a8bab4ec561322e
