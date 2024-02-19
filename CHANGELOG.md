@@ -1,3 +1,20 @@
+## v1.1.0
+> ###### 2/18/2024
+
+----
+
+- Enhancements
+    - **[Beta]** Added [`Animations:AttachAnimatedObject()`](/api/AnimationsServer/#AttachAnimatedObject), [`Animations:DetachAnimatedObject()`](/api/AnimationsServer/#DetachAnimatedObject) methods, [`HasAnimatedObject`](/api/AnimationIds/#HasAnimatedObject) function in the [`AnimationIds`](/api/AnimationIds) module, and an [animated objects tutorial](/docs/animated-objects). [Issue #15](https://github.com/wrello/Animations/issues/15)
+    - Added a tip that `"walk"` is the animation id that is applied for `R6` characters and `"run"` is the animation id that is applied for `R15` characters when using [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds). [Issue #20](https://github.com/wrello/Animations/issues/20)
+
+- Changes (non-breaking)
+    - Changed `ASSET_ID_STR` to format an integer instead of a float. [Issue #19](https://github.com/wrello/Animations/issues/19)
+
+- Fixes
+    - Fixed lots of documentation and typing errors, especially related to `CustomRBXAnimationIds` which is now [`humanoidRigTypeToCustomRBXAnimationIds`](/api/AnimationsServer/#humanoidRigTypeToCustomRBXAnimationIds).
+    - Fixed [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) not working. [Issue #18](https://github.com/wrello/Animations/issues/18)
+    - Fixed bad type annotation for [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds). [Issue #16](https://github.com/wrello/Animations/issues/16)
+
 ## v1.0.5
 > ###### 1/31/2024
 

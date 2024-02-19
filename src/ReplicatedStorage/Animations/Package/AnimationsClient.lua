@@ -13,15 +13,16 @@ local player = Players.LocalPlayer
 --[=[
 	@interface initOptions
 	@within AnimationsClient
-	.AutoLoadPlayerTracks boolean -- Defaults to false
-	.TimeToLoadPrints boolean -- Defaults to true (on the client)
-	
+	.AutoLoadPlayerTracks false
+	.TimeToLoadPrints true
+	.AnimatedObjectsDebugMode false
+
 	Gets applied to [`Properties`](#properties).
 ]=]
 type AnimationsClientInitOptionsType = Types.AnimationsClientInitOptionsType
 
 --[=[
-	@type path any
+	@type path {any} | string
 	@within AnimationsClient
 	
 	```lua
@@ -39,7 +40,6 @@ type AnimationsClientInitOptionsType = Types.AnimationsClientInitOptionsType
 	local animationTrack = Animations:GetTrack(animationPath)
 	```
 ]=]
-
 local Animations = AnimationsClass.new()
 
 --[=[
@@ -81,6 +81,14 @@ AnimationsClient.AutoLoadPlayerTracks = false
 AnimationsClient.TimeToLoadPrints = true
 
 --[=[
+	@prop AnimatedObjectsDebugMode false
+	@within AnimationsClient
+
+	If set to true, prints will be made to help debug attaching and detaching animated objects.
+]=]
+AnimationsClient.AnimatedObjectsDebugMode = false
+
+--[=[
 	@yields
 	@param initOptions initOptions?
 
@@ -105,6 +113,10 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 
 		if initOptions.TimeToLoadPrints ~= nil then
 			self.TimeToLoadPrints = initOptions.TimeToLoadPrints
+		end
+
+		if initOptions.AnimatedObjectsDebugMode ~= nil then
+			self.AnimatedObjectsDebugMode = initOptions.AnimatedObjectsDebugMode
 		end
 	end
 
@@ -188,7 +200,7 @@ end
 	Yields while client animation tracks load.
 
 	:::tip
-	Automatically gives the rig (the player's character) an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
+	Automatically gives the rig (the player's character) an attribute `"AnimationsRigType"` set to the given [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
 	:::
 ]=]
 --[=[
@@ -201,7 +213,7 @@ end
 	Yields while the rig animation tracks load.
 
 	:::tip
-	Automatically gives the rig an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType).
+	Automatically gives the rig an attribute `"AnimationsRigType"` set to the given [`rigType`](/api/AnimationIds#rigType).
 	:::
 ]=]
 
@@ -431,6 +443,58 @@ end
 	@param alias any
 
 	Removes the alias for a rig animation track.
+]=]
+
+--[=[
+	@tag Beta
+	@method AttachAnimatedObject
+	@within AnimationsClient
+	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+
+	Attaches the animated object to the client's character.
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
+]=]
+--[=[
+	@tag Beta
+	@method AttachRigAnimatedObject
+	@within AnimationsClient
+	@param rig Model
+	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+
+	Attaches the animated object to the rig.
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
+]=]
+
+--[=[
+	@tag Beta
+	@method AttachAnimatedObject
+	@within AnimationsClient
+	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+
+	Detaches the animated object from the client's character.
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
+]=]
+--[=[
+	@tag Beta
+	@method AttachRigAnimatedObject
+	@within AnimationsClient
+	@param rig Model
+	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+
+	Detaches the animated object from the rig.
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
 ]=]
 
 return AnimationsClient :: Types.AnimationsClientType

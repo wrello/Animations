@@ -1,4 +1,5 @@
 local Types = require(script.Parent.Parent.Package.Util.Types)
+local HasAnimatedObject = require(script.Parent.Parent.Package.Util.HasAnimatedObject)
 
 --[=[
 	@type rigType string
@@ -39,13 +40,49 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 ]=]
 
 --[=[
+	@tag Beta
+	@type HasAnimatedObject (animationId: number | {}, animatedObjectPath: {any} | string, autoAttachDetachSettings: {RunContext: "Client" | "Server", AutoAttach: boolean?, AutoDetach: boolean?}?): {}
+	@within AnimationIds
+
+	```lua
+	local AnimationIds = {
+		Player = { -- `rigType` of "Player"
+			Dodge = {
+				[Enum.KeyCode.W] = 0000000,
+				[Enum.KeyCode.S] = 0000000,
+				[Enum.KeyCode.A] = 0000000,
+				[Enum.KeyCode.D] = 0000000,
+			},
+			Run = 0000000,
+			Walk = 0000000,
+			Idle = 0000000,
+			Sword = {
+				Walk = HasAnimatedObject(0000000, "Sword", { RunContext = "Client", AutoAttach = true }) -- Now when the "Sword.Walk" animation plays on the client "Sword" will auto attach to the player and get animated
+				Idle = 0000000,
+				Run = 0000000,
+				AttackCombo = HasAnimatedObject({
+					[1] = 0000000,
+					[2] = 0000000,
+					[3] = 0000000
+				}, "Sword", { RunContext = "Client", AutoAttach = true }) -- Now when {"Sword", "AttackCombo", 1 or 2 or 3} animation plays "Sword" will auto attach to the player and get animated
+			}
+		},
+	}
+	```
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
+]=]
+
+--[=[
 	@interface AnimationIds
 	@within AnimationIds
 	.[rigType] idTable
 
 	```lua
 	local AnimationIds = {
-		Player = {
+		Player = { -- `rigType` of "Player"
 			Dodge = {
 				[Enum.KeyCode.W] = 0000000,
 				[Enum.KeyCode.S] = 0000000,
@@ -57,7 +94,7 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 			Idle = 0000000
 		},
 		
-		BigMonster = {
+		BigMonster = { -- `rigType` of "BigMonster"
 			HardMode = {
 				Attack1 = 0000000,
 				Attack2 = 0000000
@@ -68,7 +105,7 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 			}
 		},
 		
-		SmallMonster = {
+		SmallMonster = { -- `rigType` of "SmallMonster"
 			HardMode = {
 				Attack1 = 0000000,
 				Attack2 = 0000000
@@ -81,7 +118,6 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 	}
 	```
 ]=]
-type AnimationIdsType = Types.AnimationIdsType
 
 --[=[
 	@tag Read Only
@@ -95,4 +131,4 @@ local AnimationIds = {
 	
 }
 
-return AnimationIds :: AnimationIdsType
+return AnimationIds :: Types.AnimationIdsType

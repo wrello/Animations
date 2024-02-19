@@ -13,10 +13,11 @@ local CustomAssert = require(script.Parent.Util.CustomAssert)
 --[=[
 	@interface initOptions
 	@within AnimationsServer
-	.AutoLoadPlayerTracks boolean -- Defaults to false
-	.TimeToLoadPrints boolean -- Defaults to false (on the server)
-	.EnableAutoCustomRBXAnimationIds boolean -- Defaults to false
-	
+	.AutoLoadPlayerTracks false
+	.TimeToLoadPrints false
+	.EnableAutoCustomRBXAnimationIds false
+	.AnimatedObjectsDebugMode false
+
 	Gets applied to [`Properties`](#properties).
 ]=]
 type AnimationsServerInitOptionsType = Types.AnimationsServerInitOptionsType
@@ -33,12 +34,27 @@ type AnimationsServerInitOptionsType = Types.AnimationsServerInitOptionsType
 	.swimIdle number?
 	.climb number?
 	
-	A table of animation ids to apply to player character's animate script, replacing default roblox animation ids.
+	A table of animation ids to replace the default roblox animation ids.
+	
+	:::info
+	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
+	:::
 ]=]
 type CustomRBXAnimationIdsType = Types.CustomRBXAnimationIdsType
 
 --[=[
-	@type path any
+	@interface humanoidRigTypeToCustomRBXAnimationIds
+	@within AnimationsServer
+	.[Enum.HumanoidRigType.R6] customRBXAnimationIds?
+	.[Enum.HumanoidRigType.R15] customRBXAnimationIds?
+	
+	A table mapping a humanoid rig type to its supported animation ids that will replace the default roblox animation ids.
+]=]
+type HumanoidRigTypeToCustomRBXAnimationIdsType = Types.HumanoidRigTypeToCustomRBXAnimationIdsType
+
+
+--[=[
+	@type path {any} | string
 	@within AnimationsServer
 	
 	```lua
@@ -57,7 +73,7 @@ type CustomRBXAnimationIdsType = Types.CustomRBXAnimationIdsType
 	```
 ]=]
 
-local ASSET_ID_STR = "rbxassetid://%f"
+local ASSET_ID_STR = "rbxassetid://%i"
 
 local Animations = AnimationsClass.new()
 
@@ -101,6 +117,14 @@ AnimationsServer.TimeToLoadPrints = false
 AnimationsServer.EnableAutoCustomRBXAnimationIds = false
 
 --[=[
+	@prop AnimatedObjectsDebugMode false
+	@within AnimationsServer
+
+	If set to true, prints will be made to help debug attaching and detaching animated objects.
+]=]
+AnimationsServer.AnimatedObjectsDebugMode = false
+
+--[=[
 	@param initOptions initOptions?
 
 	Initializes `AnimationsServer`.
@@ -126,6 +150,10 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 			self.TimeToLoadPrints = initOptions.TimeToLoadPrints
 		end
 		
+		if initOptions.AnimatedObjectsDebugMode ~= nil then
+			self.AnimatedObjectsDebugMode = initOptions.AnimatedObjectsDebugMode
+		end
+
 		if initOptions.EnableAutoCustomRBXAnimationIds ~= nil then
 			self.EnableAutoCustomRBXAnimationIds = initOptions.EnableAutoCustomRBXAnimationIds
 		end
@@ -162,9 +190,9 @@ end
 	@tag Server Only
 	@yields
 	@param player Player
-	@param customRBXAnimationIds customRBXAnimationIds
+	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
 
-	Applies the animation ids specified in the given [`customRBXAnimationIds`](#customRBXAnimationIds) table on the given `player`'s character. Yields if the `player`'s character, humanoid, animator, or animate script aren't immediately available.
+	Applies the animation ids specified in the given [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the given `player`'s character. Yields if the `player`'s character, humanoid, animator, or animate script aren't immediately available.
 
 	```lua
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
@@ -176,15 +204,13 @@ end
 	print("Applying r15 ninja jump animation")
 
 	Animations:ApplyCustomRBXAnimationIds(game.Players.YourName, {
-		jump = 656117878, -- This is an r15 ninja jump animation
+		[Enum.HumanoidRigType.R15] = {
+			jump = 656117878, -- This is an r15 ninja jump animation that will only work if your character is R15
+		}
 	})
 	```
-
-	:::caution
-	Be aware that if the animation was created on a different `HumanoidRigType` than that of the player's character, the animation will not work. If you don't know what `HumanoidRigType` the player has, you can get around this by formatting the [`customRBXAnimationIds`](#customRBXAnimationIds) table like the [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) module table (with [Enum.HumanoidRigType] keys corresponding to animation ids created for that `HumanoidRigType`).
-	:::
 ]=]
-function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, customRBXAnimationIds: CustomRBXAnimationIdsType)
+function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, humanoidRigTypeToCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType)
 	self._initializedAssertion()
 	
 	local char = player.Character or player.CharacterAdded:Wait()
@@ -196,21 +222,25 @@ function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, customRBXAn
 		track:Stop(0)
 	end
 	
-	local humRigTypeSupportedAnimationIds = customRBXAnimationIds[hum.RigType]
+	local humRigTypeCustomRBXAnimationIds = humanoidRigTypeToCustomRBXAnimationIds[hum.RigType]
 	
-	assert(humRigTypeSupportedAnimationIds, `No custom rbx animation ids found for rig type {hum.RigType}`)
-	
-	for animName, animId in pairs(humRigTypeSupportedAnimationIds) do
-		local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
+	if humRigTypeCustomRBXAnimationIds then
+		for animName, animId in pairs(humRigTypeCustomRBXAnimationIds) do
+			local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
 
-		if rbxAnimInstancesContainer then
-			for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
-				local animInstance = animInstance :: Animation
+			if rbxAnimInstancesContainer then
+				for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
+					local animInstance = animInstance :: Animation
 
-				if type(animId) == "table" then
-					animInstance.AnimationId = ASSET_ID_STR:format(animId[animInstance.Name])
-				else
-					animInstance.AnimationId = ASSET_ID_STR:format(animId)
+					if type(animId) == "table" then
+						local animId = animId[animInstance.Name]
+
+						if animId then
+							animInstance.AnimationId = ASSET_ID_STR:format(animId)
+						end
+					else
+						animInstance.AnimationId = ASSET_ID_STR:format(animId)
+					end
 				end
 			end
 		end
@@ -261,7 +291,7 @@ end
 	Yields while the player or rig's animation tracks load.
 
 	:::tip
-	Automatically gives the rig an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType).
+	Automatically gives the rig an attribute `"AnimationsRigType"` set to the given [`rigType`](/api/AnimationIds#rigType).
 	:::
 ]=]
 
@@ -417,6 +447,34 @@ end
 	@param alias any
 
 	Removes the alias for a player or rig's animation track.
+]=]
+
+--[=[
+	@tag Beta
+	@method AttachAnimatedObject
+	@within AnimationsServer
+	@param player_or_rig Player | Model
+	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+
+	Attaches the animated object to the rig.
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
+]=]
+
+--[=[
+	@tag Beta
+	@method DetachAnimatedObject
+	@within AnimationsServer
+	@param player_or_rig Player | Model
+	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+
+	Detaches the animated object from the rig (destroys them).
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
 ]=]
 
 return AnimationsServer :: Types.AnimationsServerType

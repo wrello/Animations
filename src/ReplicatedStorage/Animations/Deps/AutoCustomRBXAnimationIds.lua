@@ -1,8 +1,36 @@
 local Types = require(script.Parent.Parent.Package.Util.Types)
 
 --[=[
+	@interface customRBXAnimationIds
+	@within AutoCustomRBXAnimationIds
+	.run number?
+	.walk number?
+	.jump number?
+	.idle {Animation1: number?, Animation2: number?}?
+	.fall number?
+	.swim number?
+	.swimIdle number?
+	.climb number?
+	
+	A table of animation ids to replace the default roblox animation ids.
+	
+	:::info
+	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
+	:::
+]=]
+
+--[=[
+	@interface humanoidRigTypeToCustomRBXAnimationIds
+	@within AutoCustomRBXAnimationIds
+	.[Enum.HumanoidRigType.R6] customRBXAnimationIds?
+	.[Enum.HumanoidRigType.R15] customRBXAnimationIds?
+	
+	A table mapping a humanoid rig type to its supported animation ids that will replace the default roblox animation ids.
+]=]
+
+--[=[
 	@tag Read Only
-	@tag Server Only
+	@server
 	@class AutoCustomRBXAnimationIds
 	
 	:::note
@@ -43,10 +71,15 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 	}
 	```
 	
+	:::info
+	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
+	:::
+
 	:::caution
 	You should not delete the `key = nil` key-value pairs. They are meant to stay for ease of modification.
 	:::
 ]=]
+
 local AutoCustomRBXAnimationIds = {
 	[Enum.HumanoidRigType.R6] = {
 		run = nil,
@@ -76,4 +109,4 @@ local AutoCustomRBXAnimationIds = {
 	}
 }
 
-return AutoCustomRBXAnimationIds :: CustomRBXAnimationIdsType
+return AutoCustomRBXAnimationIds :: Types.HumanoidRigTypeToCustomRBXAnimationIdsType
