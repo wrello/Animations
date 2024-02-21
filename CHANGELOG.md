@@ -1,3 +1,14 @@
+## v1.2.0
+> ###### 2/20/2024
+
+----
+
+- Enhancements
+    - Added [`AnimationsClient:ApplyCustomRBXAnimationIds()`](/api/AnimationsClient/#ApplyCustomRBXAnimationIds). [Issue #21](https://github.com/wrello/Animations/issues/21)
+
+- Fixes
+    - Fixed [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) not updating the animations until after the player moved.
+
 ## v1.1.0
 > ###### 2/18/2024
 

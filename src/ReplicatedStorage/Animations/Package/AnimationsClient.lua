@@ -161,6 +161,64 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 end
 
 --[=[
+	@interface customRBXAnimationIds
+	@within AnimationsClient
+	.run number?
+	.walk number?
+	.jump number?
+	.idle {Animation1: number?, Animation2: number?}?
+	.fall number?
+	.swim number?
+	.swimIdle number?
+	.climb number?
+	
+	A table of animation ids to replace the default roblox animation ids.
+	
+	:::info
+	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
+	:::
+]=]
+
+--[=[
+	@interface humanoidRigTypeToCustomRBXAnimationIds
+	@within AnimationsClient
+	.[Enum.HumanoidRigType.R6] customRBXAnimationIds?
+	.[Enum.HumanoidRigType.R15] customRBXAnimationIds?
+	
+	A table mapping a humanoid rig type to its supported animation ids that will replace the default roblox animation ids.
+]=]
+
+--[=[
+	@method ApplyCustomRBXAnimationIds
+	@within AnimationsClient
+	@yields
+	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
+	
+	Applies the animation ids specified in the given [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
+
+	```lua
+	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
+
+	Animations:Init()
+
+	task.wait(5)
+
+	print("Applying r15 ninja jump & idle animations")
+
+	-- These animations will only work if your character is R15
+	Animations:ApplyCustomRBXAnimationIds({
+		[Enum.HumanoidRigType.R15] = {
+			jump = 656117878,
+			idle = {
+				Animation1 = 656117400,
+				Animation2 = 656118341
+			}	
+		}
+	})
+	```
+]=]
+
+--[=[
 	@method AwaitLoaded
 	@yields
 	@within AnimationsClient

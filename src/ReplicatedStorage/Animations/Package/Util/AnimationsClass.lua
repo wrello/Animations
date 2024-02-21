@@ -560,4 +560,41 @@ function AnimationsClass:RemoveTrackAlias(player_or_rig: Player | Model, alias: 
 	self:_removeTrackAlias(player_or_rig, alias)
 end
 
+function AnimationsClass:ApplyCustomRBXAnimationIds(player: Player, humanoidRigTypeToCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType)
+	self._initializedAssertion()
+
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hum = char:WaitForChild("Humanoid") :: Humanoid
+	local animator = hum:WaitForChild("Animator") :: Animator
+	local animateScript = char:WaitForChild("Animate")
+
+	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+		track:Stop(0)
+	end
+
+	local humRigTypeCustomRBXAnimationIds = humanoidRigTypeToCustomRBXAnimationIds[hum.RigType]
+
+	if humRigTypeCustomRBXAnimationIds then
+		for animName, animId in pairs(humRigTypeCustomRBXAnimationIds) do
+			local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
+
+			if rbxAnimInstancesContainer then
+				for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
+					local animInstance = animInstance :: Animation
+
+					if type(animId) == "table" then
+						local animId = animId[animInstance.Name]
+
+						if animId then
+							animInstance.AnimationId = ANIM_ID_STR:format(animId)
+						end
+					else
+						animInstance.AnimationId = ANIM_ID_STR:format(animId)
+					end
+				end
+			end
+		end
+	end
+end
+
 return AnimationsClass

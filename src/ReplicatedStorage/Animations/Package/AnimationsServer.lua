@@ -23,37 +23,6 @@ local CustomAssert = require(script.Parent.Util.CustomAssert)
 type AnimationsServerInitOptionsType = Types.AnimationsServerInitOptionsType
 
 --[=[
-	@interface customRBXAnimationIds
-	@within AnimationsServer
-	.run number?
-	.walk number?
-	.jump number?
-	.idle {Animation1: number?, Animation2: number?}?
-	.fall number?
-	.swim number?
-	.swimIdle number?
-	.climb number?
-	
-	A table of animation ids to replace the default roblox animation ids.
-	
-	:::info
-	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
-	:::
-]=]
-type CustomRBXAnimationIdsType = Types.CustomRBXAnimationIdsType
-
---[=[
-	@interface humanoidRigTypeToCustomRBXAnimationIds
-	@within AnimationsServer
-	.[Enum.HumanoidRigType.R6] customRBXAnimationIds?
-	.[Enum.HumanoidRigType.R15] customRBXAnimationIds?
-	
-	A table mapping a humanoid rig type to its supported animation ids that will replace the default roblox animation ids.
-]=]
-type HumanoidRigTypeToCustomRBXAnimationIdsType = Types.HumanoidRigTypeToCustomRBXAnimationIdsType
-
-
---[=[
 	@type path {any} | string
 	@within AnimationsServer
 	
@@ -72,8 +41,6 @@ type HumanoidRigTypeToCustomRBXAnimationIdsType = Types.HumanoidRigTypeToCustomR
 	local animationTrack = Animations:GetTrack(player, animationPath)
 	```
 ]=]
-
-local ASSET_ID_STR = "rbxassetid://%i"
 
 local Animations = AnimationsClass.new()
 
@@ -187,7 +154,36 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 end
 
 --[=[
-	@tag Server Only
+	@interface customRBXAnimationIds
+	@within AnimationsServer
+	.run number?
+	.walk number?
+	.jump number?
+	.idle {Animation1: number?, Animation2: number?}?
+	.fall number?
+	.swim number?
+	.swimIdle number?
+	.climb number?
+	
+	A table of animation ids to replace the default roblox animation ids.
+	
+	:::info
+	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
+	:::
+]=]
+
+--[=[
+	@interface humanoidRigTypeToCustomRBXAnimationIds
+	@within AnimationsServer
+	.[Enum.HumanoidRigType.R6] customRBXAnimationIds?
+	.[Enum.HumanoidRigType.R15] customRBXAnimationIds?
+	
+	A table mapping a humanoid rig type to its supported animation ids that will replace the default roblox animation ids.
+]=]
+
+--[=[
+	@method ApplyCustomRBXAnimationIds
+	@within AnimationsServer
 	@yields
 	@param player Player
 	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
@@ -201,51 +197,20 @@ end
 
 	task.wait(5)
 
-	print("Applying r15 ninja jump animation")
+	print("Applying r15 ninja jump & idle animations")
 
+	-- These animations will only work if your character is R15
 	Animations:ApplyCustomRBXAnimationIds(game.Players.YourName, {
 		[Enum.HumanoidRigType.R15] = {
-			jump = 656117878, -- This is an r15 ninja jump animation that will only work if your character is R15
+			jump = 656117878,
+			idle = {
+				Animation1 = 656117400,
+				Animation2 = 656118341
+			}	
 		}
 	})
 	```
 ]=]
-function AnimationsServer:ApplyCustomRBXAnimationIds(player: Player, humanoidRigTypeToCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType)
-	self._initializedAssertion()
-	
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:WaitForChild("Humanoid") :: Humanoid
-	local animator = hum:WaitForChild("Animator") :: Animator
-	local animateScript = char:WaitForChild("Animate")
-	
-	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-		track:Stop(0)
-	end
-	
-	local humRigTypeCustomRBXAnimationIds = humanoidRigTypeToCustomRBXAnimationIds[hum.RigType]
-	
-	if humRigTypeCustomRBXAnimationIds then
-		for animName, animId in pairs(humRigTypeCustomRBXAnimationIds) do
-			local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
-
-			if rbxAnimInstancesContainer then
-				for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
-					local animInstance = animInstance :: Animation
-
-					if type(animId) == "table" then
-						local animId = animId[animInstance.Name]
-
-						if animId then
-							animInstance.AnimationId = ASSET_ID_STR:format(animId)
-						end
-					else
-						animInstance.AnimationId = ASSET_ID_STR:format(animId)
-					end
-				end
-			end
-		end
-	end
-end
 
 --[=[
 	@method AwaitLoaded
