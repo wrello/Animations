@@ -72,6 +72,8 @@ export type AnimationsClientType = {
 	DetachAnimatedObject: (self: AnimationsClientType, animatedObjectSourcePath_or_animationTrack_or_animatedObject: ({any} | string) | AnimationTrack | Instance) -> (),
 	DetachRigAnimatedObject: (self: AnimationsClientType, rig: Model, animatedObjectSourcePath_or_animationTrack_or_animatedObject: ({any} | string) | AnimationTrack | Instance) -> (),
 
+	ApplyCustomRBXAnimationIds: (self: AnimationsClientType, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
+
 	Init: (self: AnimationsClientType, initOptions: AnimationsClientInitOptionsType?) -> ()	
 } & AnimationsClientInitOptionsType
 
