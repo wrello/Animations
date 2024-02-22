@@ -595,6 +595,8 @@ function AnimationsClass:ApplyCustomRBXAnimationIds(player: Player, humanoidRigT
 			end
 		end
 	end
+	
+	hum:ChangeState(Enum.HumanoidStateType.Landed)
 end
 
 return AnimationsClass
