@@ -596,7 +596,7 @@ function AnimationsClass:ApplyCustomRBXAnimationIds(player: Player, humanoidRigT
 		end
 	end
 	
-	hum:ChangeState(Enum.HumanoidStateType.Landed)
+	hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force roblox's animate script to update the animation
 end
 
 return AnimationsClass
