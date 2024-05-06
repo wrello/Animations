@@ -12,7 +12,7 @@ First create a module inside of the `Animations.Deps.AnimationProfiles` folder. 
 
 ![tutorial-1](/images/animation-profiles-tutorial-1.png)
 
-The animation profile (what the `Zombie` module returns) is just a [`humanoidRigTypeToCustomRBXAnimationIds`](http://localhost:3000/Animations/api/AnimationsServer#humanoidRigTypeToCustomRBXAnimationIds) table, as seen below:
+The animation profile (what the `Zombie` module returns) is just a [`humanoidRigTypeToCustomRBXAnimationIds`](https://wrello.github.io/Animations/api/AnimationsServer#humanoidRigTypeToCustomRBXAnimationIds) table, as seen below:
 ```lua
 -- Inside of `Animations.Deps.AnimationProfiles.Zombie`
 return {
