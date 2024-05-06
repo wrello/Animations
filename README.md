@@ -1,3 +1,5 @@
+![AnimationsLogo250x250](/images/tutorial-1.png)
+
 # Animations
 A robust and easy to use module for playing & pre-loading animations on rigs in roblox.
 

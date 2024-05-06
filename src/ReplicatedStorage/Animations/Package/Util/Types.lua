@@ -1,6 +1,8 @@
 --!strict
 
 export type AnimationsServerType = {
+	Init: (self: AnimationsServerType, initOptions: AnimationsServerInitOptionsType?) -> (),
+	
 	AwaitLoaded: (self: AnimationsServerType, player_or_model: Player | Model) -> (),
 
 	AreTracksLoaded: (self: AnimationsServerType, player_or_model: Player | Model) -> boolean,
@@ -12,6 +14,8 @@ export type AnimationsServerType = {
 	PlayTrack: (self: AnimationsServerType, player_or_model: Player | Model, path: {any} | string, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
 
 	StopTrack: (self: AnimationsServerType, player_or_model: Player | Model, path: {any} | string, fadeTime: number?) -> AnimationTrack,
+
+	StopTracksOfPriority: (self: AnimationsClientType, player_or_model: Player | Model, animationPriority: Enum.AnimationPriority, fadeTime: number?) -> {AnimationTrack?},
 
 	GetTrackFromAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any) -> AnimationTrack?,
 
@@ -29,10 +33,12 @@ export type AnimationsServerType = {
 
 	ApplyCustomRBXAnimationIds: (self: AnimationsServerType, player: Player, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
 
-	Init: (self: AnimationsServerType, initOptions: AnimationsServerInitOptionsType?) -> ()	
+	ApplyAnimationProfile: (self: AnimationsServerType, player: Player, animationProfileName: string) -> ()
 } & AnimationsServerInitOptionsType
 
 export type AnimationsClientType = {
+	Init: (self: AnimationsClientType, initOptions: AnimationsClientInitOptionsType?) -> (),
+	
 	AwaitLoaded: (self: AnimationsClientType) -> (),
 	AwaitRigLoaded: (self: AnimationsClientType, rig: Model) -> (),
 
@@ -50,6 +56,9 @@ export type AnimationsClientType = {
 
 	StopTrack: (self: AnimationsClientType, path: {any} | string, fadeTime: number?) -> AnimationTrack,
 	StopRigTrack: (self: AnimationsClientType, rig: Model, path: {any} | string, fadeTime: number?) -> AnimationTrack,
+
+	StopTracksOfPriority: (self: AnimationsClientType, animationPriority: Enum.AnimationPriority, fadeTime: number?) -> {AnimationTrack?},
+	StopRigTracksOfPriority: (self: AnimationsClientType, rig: Model, animationPriority: Enum.AnimationPriority, fadeTime: number?) -> {AnimationTrack?},
 
 	GetTrackFromAlias: (self: AnimationsClientType, alias: any) -> AnimationTrack?,
 	GetRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any) -> AnimationTrack?,
@@ -74,7 +83,7 @@ export type AnimationsClientType = {
 
 	ApplyCustomRBXAnimationIds: (self: AnimationsClientType, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
 
-	Init: (self: AnimationsClientType, initOptions: AnimationsClientInitOptionsType?) -> ()	
+	ApplyAnimationProfile: (self: AnimationsClientType, animationProfileName: string) -> ()
 } & AnimationsClientInitOptionsType
 
 export type CustomRBXAnimationIdsType = {

@@ -27,25 +27,26 @@ local Players = game:GetService("Players")
 local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
 
 Animations:Init({
-    AutoLoadPlayerTracks = true, -- Defaults to false
-    TimeToLoadPrints = true -- Defaults to false (on the server)
+	AutoLoadPlayerTracks = true, -- Defaults to false
+	TimeToLoadPrints = true -- Defaults to false (on the server)
 })
 
 local function onPlayerAdded(player)
-    Animations:AwaitLoaded(player)
+	Animations:AwaitLoaded(player)
 
-    print("Finished loading animations for", player.Name)
+	print("Finished loading animations for", player.Name)
 
-    while true do
-        print("Playing ninja jump animation for", player.Name)
-        Animations:PlayTrack(player, "Jump")
+	-- Roblox's r15 ninja jump animation is looped.
 
-        task.wait(3)
-    end
+	-- `AnimationTrack.Looped = false` doesn't replicate clients, so
+	-- it is impossible to make this not loop from the server.
+	
+	print("Playing looped ninja jump animation for", player.Name)
+	Animations:PlayTrack(player, "Jump")
 end
 
 for _, player in ipairs(Players:GetPlayers()) do
-    task.spawn(onPlayerAdded, player)
+	task.spawn(onPlayerAdded, player)
 end
 
 Players.PlayerAdded:Connect(onPlayerAdded)
@@ -58,27 +59,29 @@ Playing the animation when it gets auto loaded on the client:
 local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
 
 Animations:Init({
-    AutoLoadPlayerTracks = true, -- Defaults to false
-    TimeToLoadPrints = true -- Defaults to true (on the client)
+	AutoLoadPlayerTracks = true, -- Defaults to false
+	TimeToLoadPrints = true -- Defaults to true (on the client)
 })
 
 local player = game.Players.LocalPlayer
 
-local function onCharacterAdded(player)
-    Animations:AwaitLoaded()
+local function onCharacterAdded(char)
+	Animations:AwaitLoaded()
 
-    print("Finished loading client animations")
+	print("Finished loading client animations")
 
-    while true do
-        print("Playing ninja jump client animation")
-        Animations:PlayTrack("Jump")
+	Animations:GetTrack("Jump").Looped = false -- Roblox's r15 ninja jump animation is looped.
 
-        task.wait(3)
-    end
+	while true do
+		print("Playing ninja jump client animation")
+		Animations:PlayTrack("Jump")
+
+		task.wait(3)
+	end
 end
 
 if player.Character then
-    onCharacterAdded(player.Character)
+	onCharacterAdded(player.Character)
 end
 
 player.CharacterAdded:Connect(onCharacterAdded)

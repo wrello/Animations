@@ -104,8 +104,6 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 		return
 	end
 
-	self._initialized = true
-	
 	if initOptions then
 		if initOptions.AutoLoadPlayerTracks ~= nil then
 			self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
@@ -120,44 +118,58 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 		end
 	end
 
-	for k: string, v in pairs(AnimationsClass) do
-		if type(v) == "function" and not k:match("^_") then
-			local clientMethodName = k
-			local rigMethodName = clientMethodName:gsub("^(%L[^%L]+)(%L[^%L]+)", "%1Rig%2")
-			
-			if clientMethodName == "LoadTracks" then
-				self[clientMethodName] = function(self, ...)
-					return v(self, player, "Player", ...)
-				end
-				
-				self[rigMethodName] = function(self, rig, rigType, ...)
-					return v(self, rig, rigType, ...)
-				end
-			else
-				self[clientMethodName] = function(self, ...)
-					return v(self, player, ...)
-				end
-				
-				self[rigMethodName] = function(self, rig, ...)
-					return v(self, rig, ...)
+	local function initRigMethods()
+		for k: string, v in pairs(AnimationsClass) do
+			if type(v) == "function" and not k:match("^_") then
+				local clientMethodName = k
+				local rigMethodName = clientMethodName:gsub("^(%L[^%L]+)(%L[^%L]+)", "%1Rig%2")
+
+				if clientMethodName == "LoadTracks" then
+					self[clientMethodName] = function(self, ...)
+						return v(self, player, "Player", ...)
+					end
+
+					self[rigMethodName] = function(self, rig, rigType, ...)
+						return v(self, rig, rigType, ...)
+					end
+				else
+					self[clientMethodName] = function(self, ...)
+						return v(self, player, ...)
+					end
+
+					self[rigMethodName] = function(self, rig, ...)
+						return v(self, rig, ...)
+					end
 				end
 			end
 		end
 	end
-
-	script.Parent.AnimationsServer:Destroy()
-
-	if self.AutoLoadPlayerTracks then
-		if player.Character then
-			self:LoadTracks()
+	
+	local function initAutoLoadPlayerTracks()
+		if self.AutoLoadPlayerTracks then
+			if player.Character then
+				self:LoadTracks()
+			end
 		end
+
+		-- TODO: Move this inside of the check above?
+		player.CharacterAdded:Connect(function(char)
+			if self.AutoLoadPlayerTracks then
+				self:LoadTracks()
+			end
+		end)
+	end
+	
+	local function destroyAnimationsServer()
+		script.Parent.AnimationsServer:Destroy()
 	end
 
-	player.CharacterAdded:Connect(function(char)
-		if self.AutoLoadPlayerTracks then
-			self:LoadTracks()
-		end
-	end)
+	destroyAnimationsServer()
+	initRigMethods()
+	
+	self._initialized = true -- Need to initialize before using self:LoadTracks() in the function below
+	
+	initAutoLoadPlayerTracks()
 end
 
 --[=[
@@ -185,7 +197,7 @@ end
 	.[Enum.HumanoidRigType.R6] customRBXAnimationIds?
 	.[Enum.HumanoidRigType.R15] customRBXAnimationIds?
 	
-	A table mapping a humanoid rig type to its supported animation ids that will replace the default roblox animation ids.
+	A table mapping a `Enum.HumanoidRigType` to its supported animation ids that will replace the default roblox animation ids.
 ]=]
 
 --[=[
@@ -194,7 +206,7 @@ end
 	@yields
 	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
 	
-	Applies the animation ids specified in the given [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
+	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
 
 	```lua
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
@@ -219,6 +231,19 @@ end
 ]=]
 
 --[=[
+	@method ApplyAnimationProfile
+	@within AnimationsClient
+	@yields
+	@param animationProfileName string
+	
+	Applies the animation ids found in the animation profile on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
+	
+	:::info
+	For more information on setting up animated objects check out [animation profiles tutorial](/docs/animation-profiles).
+	:::
+]=]
+
+--[=[
 	@method AwaitLoaded
 	@yields
 	@within AnimationsClient
@@ -231,7 +256,7 @@ end
 	@within AnimationsClient
 	@param rig Model
 	
-	Yields until the rig animation tracks have loaded.
+	Yields until the `rig` animation tracks have loaded.
 ]=]
 
 --[=[
@@ -247,7 +272,7 @@ end
 	@param rig Model
 	@return boolean
 	
-	Returns if the rig has had its animation tracks loaded.
+	Returns if the `rig` has had its animation tracks loaded.
 ]=]
 
 --[=[
@@ -258,7 +283,7 @@ end
 	Yields while client animation tracks load.
 
 	:::tip
-	Automatically gives the rig (the player's character) an attribute `"AnimationsRigType"` set to the given [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
+	Automatically gives the `rig` (the player's character) an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
 	:::
 ]=]
 --[=[
@@ -268,10 +293,10 @@ end
 	@param rig Model
 	@param rigType string
 	
-	Yields while the rig animation tracks load.
+	Yields while the `rig` animation tracks load.
 
 	:::tip
-	Automatically gives the rig an attribute `"AnimationsRigType"` set to the given [`rigType`](/api/AnimationIds#rigType).
+	Automatically gives the `rig` an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType).
 	:::
 ]=]
 
@@ -290,7 +315,7 @@ end
 	@param path path
 	@return AnimationTrack?
 	
-	Returns a rig animation track or nil.
+	Returns a `rig` animation track or nil.
 ]=]
 
 --[=[
@@ -314,7 +339,7 @@ end
 	@param speed number?
 	@return AnimationTrack
 
-	Returns a playing rig animation track.
+	Returns a playing `rig` animation track.
 ]=]
 
 --[=[
@@ -334,7 +359,27 @@ end
 	@param fadeTime number?
 	@return AnimationTrack
 
-	Returns a stopped rig animation track.
+	Returns a stopped `rig` animation track.
+]=]
+
+--[=[
+	@method StopTracksOfPriority
+	@within AnimationsClient
+	@param animationPriority Enum.AnimationPriority
+	@param fadeTime number?
+	@return {AnimationTrack?}
+
+	Returns the stopped client animation tracks.
+]=]
+--[=[
+	@method StopRigTracksOfPriority
+	@within AnimationsClient
+	@param rig Model
+	@param animationPriority Enum.AnimationPriority
+	@param fadeTime number?
+	@return {AnimationTrack?}
+
+	Returns the stopped `rig` animation tracks.
 ]=]
 
 --[=[
@@ -352,7 +397,7 @@ end
 	@param alias any
 	@return AnimationTrack?
 
-	Returns a rig animation track or nil.
+	Returns a `rig` animation track or nil.
 ]=]
 
 --[=[
@@ -376,7 +421,7 @@ end
 	@param speed number?
 	@return AnimationTrack
 
-	Returns a playing rig animation track.
+	Returns a playing `rig` animation track.
 ]=]
 
 --[=[
@@ -396,7 +441,7 @@ end
 	@param fadeTime number?
 	@return AnimationTrack
 
-	Returns a stopped rig animation track.
+	Returns a stopped `rig` animation track.
 ]=]
 
 --[=[
@@ -405,7 +450,7 @@ end
 	@param alias any
 	@param path path
 
-	Sets an alias to be the equivalent of the given path for a client animation track.
+	Sets an alias to be the equivalent of the path for a client animation track.
 
 	:::tip
 	You can use the alias as the last key in the path. Useful for a table of animations. Example:
@@ -480,7 +525,7 @@ end
 	@param alias any
 	@param path path
 
-	Sets an alias to be the equivalent of the given path for a rig animation track.
+	Sets an alias to be the equivalent of the path for a `rig` animation track.
 
 	:::tip
 	Same tip for [`Animations:SetTrackAlias()`](#SetTrackAlias) applies here.
@@ -500,7 +545,7 @@ end
 	@param rig Model
 	@param alias any
 
-	Removes the alias for a rig animation track.
+	Removes the alias for a `rig` animation track.
 ]=]
 
 --[=[
@@ -522,7 +567,7 @@ end
 	@param rig Model
 	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
 
-	Attaches the animated object to the rig.
+	Attaches the animated object to the `rig`.
 
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
@@ -531,7 +576,7 @@ end
 
 --[=[
 	@tag Beta
-	@method AttachAnimatedObject
+	@method DetachAnimatedObject
 	@within AnimationsClient
 	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
 
@@ -543,12 +588,12 @@ end
 ]=]
 --[=[
 	@tag Beta
-	@method AttachRigAnimatedObject
+	@method DetachRigAnimatedObject
 	@within AnimationsClient
 	@param rig Model
 	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
 
-	Detaches the animated object from the rig.
+	Detaches the animated object from the `rig`.
 
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).

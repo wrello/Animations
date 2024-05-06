@@ -10,9 +10,12 @@ local Await = require(script.Parent.Await)
 local ChildFromPath = require(script.Parent.ChildFromPath)
 local CustomAssert = require(script.Parent.CustomAssert)
 local AnimatedObjectsFolder = script.Parent.Parent.Parent.Deps.AnimatedObjects
+local Zip = require(script.Parent.Zip)
 
 local ANIMATED_OBJECT_MOTOR6D_NAME = "AnimatedObjectMotor6D"
 local ANIM_ID_STR = "rbxassetid://%i"
+
+local animationProfiles = Zip.children(script.Parent.Parent.Parent.Deps.AnimationProfiles)
 
 local function getRig(player_or_rig)
 	local playerCharacter 
@@ -60,6 +63,23 @@ local function setToolRightGripWeldEnabled(rig, tool, enabled)
 	if rightGripWeld then
 		rightGripWeld.Enabled = enabled
 	end	
+end
+
+local function getAnimator(player_or_rig, rig)
+	local animatorParent = (player_or_rig:IsA("Player") and rig:WaitForChild("Humanoid")) or rig:FindFirstChild("Humanoid") or rig:FindFirstChild("AnimationController")
+
+	CustomAssert(animatorParent, "No animator parent (Humanoid or AnimationController) found [", rig:GetFullName(), "]")
+
+	local animator = animatorParent:FindFirstChild("Animator")
+
+	if not animator then
+		animator = Instance.new("Animator")
+		animator.Parent = animatorParent
+	end
+
+	CustomAssert(animator, "No animator found [", rig:GetFullName(), "]")
+
+	return animator
 end
 
 local AnimationsClass = {}
@@ -150,6 +170,7 @@ function AnimationsClass.new()
 
 	self.FinishedLoadingRigSignal = Signal.new()
 	self.LoadedTracks = {}
+	self.CurrentAnimationProfiles = {}
 	self.Aliases = {}
 	self.AnimationInstanceToAnimatedObjectInfo = {}
 	self.TrackToAnimatedObjectInfo = {}
@@ -219,20 +240,6 @@ end
 
 function AnimationsClass:_removeTrackAlias(player_or_rig, alias)
 	self.Aliases[player_or_rig][alias] = nil
-end
-
-function AnimationsClass:_getAnimator(player_or_rig, rig)
-	local animatorParent = (player_or_rig:IsA("Player") and rig:WaitForChild("Humanoid")) or rig:FindFirstChild("Humanoid") or rig:FindFirstChild("AnimationController")
-	local animator = animatorParent:FindFirstChild("Animator")
-
-	if not animator then
-		animator = Instance.new("Animator")
-		animator.Parent = animatorParent
-	end
-
-	CustomAssert(animator, "No animator found [", rig:GetFullName(), "]")
-
-	return animator
 end
 
 function AnimationsClass:_attachDetachAnimatedObject(attach_detach, player_or_rig, animatedObjectSourcePath_or_animationTrack_or_animatedObject)
@@ -377,6 +384,44 @@ function AnimationsClass:_attachDetachAnimatedObject(attach_detach, player_or_ri
 	end
 end
 
+function AnimationsClass:_applyCustomRBXAnimationIds(player, humanoidRigTypeToCustomRBXAnimationIds)
+	local char = player.Character or player.CharacterAdded:Wait()
+	local hum = char:WaitForChild("Humanoid") :: Humanoid
+	local animator = hum:WaitForChild("Animator") :: Animator
+	local animateScript = char:WaitForChild("Animate")
+
+	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
+		track:Stop(0)
+	end
+
+	local humRigTypeCustomRBXAnimationIds = humanoidRigTypeToCustomRBXAnimationIds[hum.RigType]
+
+	if humRigTypeCustomRBXAnimationIds then
+		for animName, animId in pairs(humRigTypeCustomRBXAnimationIds) do
+			local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
+
+			if rbxAnimInstancesContainer then
+				for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
+					local animInstance = animInstance :: Animation
+
+					if type(animId) == "table" then
+						local animId = animId[animInstance.Name]
+
+						if animId then
+							animInstance.AnimationId = ANIM_ID_STR:format(animId)
+						end
+					else
+						animInstance.AnimationId = ANIM_ID_STR:format(animId)
+					end
+				end
+			end
+		end
+
+		RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait(), the running animation bugs if they are moving when this function is called.
+		hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
+	end
+end
+
 -------------
 -- PUBLIC --
 -------------
@@ -419,7 +464,7 @@ function AnimationsClass:LoadTracks(player_or_rig: Player | Model, rigType: stri
 
 	CustomAssert(not self.IsRigLoaded[rig], "Animation tracks already loaded for [", rig:GetFullName(), "] !")
 
-	local animator: Animator = self:_getAnimator(player_or_rig, rig)
+	local animator: Animator = getAnimator(player_or_rig, rig)
 
 	local tracks = self.LoadedTracks[rig]
 
@@ -530,6 +575,24 @@ function AnimationsClass:StopTrack(player_or_rig: Player | Model, path: {any} | 
 	return self:_playStopTrack("Stop", player_or_rig, path, false, fadeTime)
 end
 
+function AnimationsClass:StopTracksOfPriority(player_or_rig: Player | Model, animationPriority: Enum.AnimationPriority, fadeTime: number?): {AnimationTrack?}
+	self._initializedAssertion()
+	
+	local animator = getAnimator(player_or_rig, getRig(player_or_rig))
+	
+	local stoppedTracks = {}
+	
+	for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+		if track.Priority == animationPriority then
+			track:Stop(fadeTime)
+			
+			table.insert(stoppedTracks, track)
+		end
+	end
+	
+	return stoppedTracks
+end
+
 function AnimationsClass:GetTrackFromAlias(player_or_rig: Player | Model, alias: any): AnimationTrack?
 	self._initializedAssertion()
 
@@ -563,40 +626,15 @@ end
 function AnimationsClass:ApplyCustomRBXAnimationIds(player: Player, humanoidRigTypeToCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType)
 	self._initializedAssertion()
 
-	local char = player.Character or player.CharacterAdded:Wait()
-	local hum = char:WaitForChild("Humanoid") :: Humanoid
-	local animator = hum:WaitForChild("Animator") :: Animator
-	local animateScript = char:WaitForChild("Animate")
+	self:_applyCustomRBXAnimationIds(player, humanoidRigTypeToCustomRBXAnimationIds)
+end
 
-	for _, track in pairs(animator:GetPlayingAnimationTracks()) do
-		track:Stop(0)
-	end
-
-	local humRigTypeCustomRBXAnimationIds = humanoidRigTypeToCustomRBXAnimationIds[hum.RigType]
-
-	if humRigTypeCustomRBXAnimationIds then
-		for animName, animId in pairs(humRigTypeCustomRBXAnimationIds) do
-			local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
-
-			if rbxAnimInstancesContainer then
-				for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
-					local animInstance = animInstance :: Animation
-
-					if type(animId) == "table" then
-						local animId = animId[animInstance.Name]
-
-						if animId then
-							animInstance.AnimationId = ANIM_ID_STR:format(animId)
-						end
-					else
-						animInstance.AnimationId = ANIM_ID_STR:format(animId)
-					end
-				end
-			end
-		end
-	end
+function AnimationsClass:ApplyAnimationProfile(player: Player, animationProfileName: string)
+	self._initializedAssertion()
 	
-	hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force roblox's animate script to update the animation
+	local animationProfile = animationProfiles[animationProfileName]
+
+	self:_applyCustomRBXAnimationIds(player, animationProfile)
 end
 
 return AnimationsClass

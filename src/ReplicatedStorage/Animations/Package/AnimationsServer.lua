@@ -188,7 +188,7 @@ end
 	@param player Player
 	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
 
-	Applies the animation ids specified in the given [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the given `player`'s character. Yields if the `player`'s character, humanoid, animator, or animate script aren't immediately available.
+	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the `player`'s character. Yields if their character, humanoid, animator, or animate script aren't immediately available.
 
 	```lua
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
@@ -210,6 +210,20 @@ end
 		}
 	})
 	```
+]=]
+
+--[=[
+	@method ApplyAnimationProfile
+	@within AnimationsServer
+	@yields
+	@param player player
+	@param animationProfileName string
+	
+	Applies the animation ids found in the animation profile on the `player`'s character. Yields if their character, humanoid, animator, or animate script aren't immediately available.
+	
+	:::info
+	For more information on setting up animated objects check out [animation profiles tutorial](/docs/animation-profiles).
+	:::
 ]=]
 
 --[=[
@@ -256,7 +270,7 @@ end
 	Yields while the player or rig's animation tracks load.
 
 	:::tip
-	Automatically gives the rig an attribute `"AnimationsRigType"` set to the given [`rigType`](/api/AnimationIds#rigType).
+	Automatically gives the rig an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType).
 	:::
 ]=]
 
@@ -292,6 +306,17 @@ end
 	@return AnimationTrack
 
 	Returns a stopped player or rig's animation track.
+]=]
+
+--[=[
+	@method StopTracksOfPriority
+	@within AnimationsServer
+	@param player_or_rig Player | Model
+	@param animationPriority Enum.AnimationPriority
+	@param fadeTime number?
+	@return {AnimationTrack?}
+
+	Returns the stopped player or rig's animation tracks.
 ]=]
 
 --[=[
@@ -335,7 +360,7 @@ end
 	@param alias any
 	@param path path
 
-	Sets an alias to be the equivalent of the given path for a player or rig's animation track.
+	Sets an alias to be the equivalent of the path for a player or rig's animation track.
 
 	:::tip
 	You can use the alias as the last key in the path. Useful for a table of animations. Example:

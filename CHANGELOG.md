@@ -1,3 +1,18 @@
+## v1.3.0
+> ###### 5/4/2024
+
+----
+
+- Enhancements
+    - Added [`animation profiles`](docs/animation-profiles). [Issue #22](https://github.com/wrello/Animations/issues/22)
+    - Added [`Animations:StopTracksOfPriority()`](/api/AnimationsServer/#StopTracksOfPriority). [Issue #26](https://github.com/wrello/Animations/issues/26)
+    - Errors if no "animator parent" (`Humanoid` or `AnimationController`) exists in the rig. [Issue #27](https://github.com/wrello/Animations/issues/27)
+
+- Fixes
+    - Fixed calling `Humanoid:ChangeState()` when it shouldn't be called. [Issue #28](https://github.com/wrello/Animations/issues/28)
+    - Fixed no documentation on [`AnimationsClient:DetachAnimatedObject()`](/api/AnimationsClient/#DetachAnimatedObject). [Issue #25](https://github.com/wrello/Animations/issues/25)
+    - Fixed basic usage document mistakes. [Issue #24](https://github.com/wrello/Animations/issues/24), [Issue #23](https://github.com/wrello/Animations/issues/23)
+
 ## v1.2.0
 > ###### 2/20/2024
 
