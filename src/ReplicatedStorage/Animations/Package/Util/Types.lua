@@ -15,7 +15,7 @@ export type AnimationsServerType = {
 
 	StopTrack: (self: AnimationsServerType, player_or_model: Player | Model, path: {any} | string, fadeTime: number?) -> AnimationTrack,
 
-	StopTracksOfPriority: (self: AnimationsClientType, player_or_model: Player | Model, animationPriority: Enum.AnimationPriority, fadeTime: number?) -> {AnimationTrack?},
+	StopTracksOfPriority: (self: AnimationsServerType, player_or_model: Player | Model, animationPriority: Enum.AnimationPriority, fadeTime: number?) -> {AnimationTrack?},
 
 	GetTrackFromAlias: (self: AnimationsServerType, player_or_model: Player | Model, alias: any) -> AnimationTrack?,
 
