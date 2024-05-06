@@ -126,31 +126,44 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 		end
 	end
 
-	local function onPlayerAdded(player)
-		local function onCharacterAdded(char)
-			local hum = char:FindFirstChild("Humanoid")
-			
-			if self.EnableAutoCustomRBXAnimationIds then
-				self:ApplyCustomRBXAnimationIds(player, AutoCustomRBXAnimationIds)
+	local function initCustomRBXAnimationIdsSignal()
+		local applyCustomRBXAnimationIdsRE = Instance.new("RemoteEvent")
+		applyCustomRBXAnimationIdsRE.Name = "ApplyCustomRBXAnimationIds"
+		applyCustomRBXAnimationIdsRE.Parent = script.Parent
+		
+		self.ApplyCustomRBXAnimationIdsSignal = applyCustomRBXAnimationIdsRE
+	end
+
+	local function initOnPlayerAdded()
+		local function onPlayerAdded(player)
+			local function onCharacterAdded(char)
+				local hum = char:FindFirstChild("Humanoid")
+
+				if self.EnableAutoCustomRBXAnimationIds then
+					self:ApplyCustomRBXAnimationIds(player, AutoCustomRBXAnimationIds)
+				end
+
+				if self.AutoLoadPlayerTracks then 
+					self:LoadTracks(player, "Player") 
+				end
 			end
-			
-			if self.AutoLoadPlayerTracks then 
-				self:LoadTracks(player, "Player") 
+
+			if player.Character then
+				onCharacterAdded(player.Character)
 			end
+
+			player.CharacterAdded:Connect(onCharacterAdded)
 		end
 		
-		if player.Character then
-			onCharacterAdded(player.Character)
+		for _, player in pairs(Players:GetPlayers()) do
+			task.spawn(onPlayerAdded, player)
 		end
-		
-		player.CharacterAdded:Connect(onCharacterAdded)
+
+		Players.PlayerAdded:Connect(onPlayerAdded)
 	end
 	
-	for _, player in pairs(Players:GetPlayers()) do
-		task.spawn(onPlayerAdded, player)
-	end
-	
-	Players.PlayerAdded:Connect(onPlayerAdded)
+	initCustomRBXAnimationIdsSignal()
+	initOnPlayerAdded()
 end
 
 --[=[

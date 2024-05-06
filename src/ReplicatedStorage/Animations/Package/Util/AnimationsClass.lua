@@ -417,8 +417,11 @@ function AnimationsClass:_applyCustomRBXAnimationIds(player, humanoidRigTypeToCu
 			end
 		end
 
-		RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait(), the running animation bugs if they are moving when this function is called.
-		hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
+		if RunService:IsClient() then
+			self.ApplyCustomRBXAnimationIdsSignal:Fire()
+		else
+			self.ApplyCustomRBXAnimationIdsSignal:FireClient(player)
+		end
 	end
 end
 

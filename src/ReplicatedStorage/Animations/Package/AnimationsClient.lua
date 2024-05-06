@@ -4,8 +4,10 @@
 assert(game:GetService("RunService"):IsClient(), "Attempt to require AnimationsClient on the server")
 
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
 local Types = require(script.Parent.Util.Types)
+local Signal = require(script.Parent.Util.Signal)
 local AnimationsClass = require(script.Parent.Util.AnimationsClass)
 
 local player = Players.LocalPlayer
@@ -160,11 +162,27 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 		end)
 	end
 	
+	local function initCustomRBXAnimationIdsSignal()
+		local function applyCustomRBXAnimationIds()
+			RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait(), the running animation bugs if they are moving when this function is called.
+			player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
+		end
+		
+		self.ApplyCustomRBXAnimationIdsSignal = Signal.new()
+		
+		local signals = {self.ApplyCustomRBXAnimationIdsSignal, script.Parent:WaitForChild("ApplyCustomRBXAnimationIds").OnClientEvent}
+		
+		for _, signal in ipairs(signals) do
+			signal:Connect(applyCustomRBXAnimationIds)
+		end
+	end
+	
 	local function destroyAnimationsServer()
 		script.Parent.AnimationsServer:Destroy()
 	end
 
 	destroyAnimationsServer()
+	initCustomRBXAnimationIdsSignal()
 	initRigMethods()
 	
 	self._initialized = true -- Need to initialize before using self:LoadTracks() in the function below
