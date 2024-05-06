@@ -1,4 +1,4 @@
-![AnimationsLogo250x250](/images/tutorial-1.png)
+![AnimationsLogo250x250](https://github.com/wrello/Animations/assets/89281328/11d3c0ad-6c54-4f73-90d9-d00e4887d4d4)
 
 # Animations
 A robust and easy to use module for playing & pre-loading animations on rigs in roblox.
