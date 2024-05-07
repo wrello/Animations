@@ -9,7 +9,7 @@ sidebar_position: 2
 # AnimationIds
 Configure your [`AnimationIds`](/api/AnimationIds) module:
 ```lua
--- In ReplicatedStorage.Animations.Deps.AnimationIds
+-- Inside of `ReplicatedStorage.Animations.Deps.AnimationIds`
 local ninjaJumpR15AnimationId = 656117878
 
 local AnimationIds = {
@@ -17,6 +17,8 @@ local AnimationIds = {
         Jump = ninjaJumpR15AnimationId -- Path of "Jump"
     }
 }
+
+return AnimationIds
 ```
 # AnimationsServer
 Playing the animation when it gets auto loaded on a player character:
