@@ -1,0 +1,12 @@
+.vscode/**
+*.rbxlx
+*.rbxl
+*.rbxl.lock
+*.rbxmx
+*.rbxm
+*.json
+*.lock
+*.toml
+*.moonwave
+docs
+build
