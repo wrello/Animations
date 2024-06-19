@@ -1,9 +1,0 @@
-.vscode/**
-*.rbxlx
-*.rbxl
-*.rbxl.lock
-*.rbxmx
-*.rbxm
-*.json
-*.toml
-build
