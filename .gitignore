@@ -6,5 +6,4 @@
 *.rbxm
 *.json
 *.toml
-*.lock
 build
