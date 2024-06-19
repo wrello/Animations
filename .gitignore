@@ -7,4 +7,5 @@
 *.json
 *.toml
 *.lock
+*.toml
 build
