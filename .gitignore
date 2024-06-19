@@ -4,4 +4,7 @@
 *.rbxl.lock
 *.rbxmx
 *.rbxm
+*.json
+*.toml
+*.lock
 build
