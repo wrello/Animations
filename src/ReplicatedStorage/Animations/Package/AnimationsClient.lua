@@ -42,7 +42,7 @@ type AnimationsClientInitOptionsType = Types.AnimationsClientInitOptionsType
 	local animationTrack = Animations:GetTrack(animationPath)
 	```
 ]=]
-local Animations = AnimationsClass.new()
+local Animations = AnimationsClass.new(script.Name)
 
 --[=[
 	@class AnimationsClient
@@ -94,7 +94,7 @@ AnimationsClient.AnimatedObjectsDebugMode = false
 	@yields
 	@param initOptions initOptions?
 
-	Initializes `AnimationsClient`. Yields if [`AnimationsClient.AutoLoadTracks`](#AutoLoadTracks) is set to true and the player's character already exists.
+	Initializes `AnimationsClient`. Yields waiting for the server to initialize and if [`AnimationsClient.AutoLoadTracks`](#AutoLoadTracks) is set to true and the player's character already exists.
 
 	:::info
 	Should be called once before any other method.
@@ -104,6 +104,19 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 	if self._initialized then
 		warn("AnimationsClient:Init() only needs to be called once")
 		return
+	end
+
+	local serverInitialized = script.Parent.AnimationsServer:GetAttribute("Initialized")
+	if not serverInitialized then
+		task.delay(3, function()
+			if not serverInitialized then
+				warn("Infinite yield possible waiting for AnimationsServer:Init()")
+			end
+		end)
+
+		script.Parent.AnimationsServer:GetAttributeChangedSignal("Initialized"):Wait()
+
+		serverInitialized = true
 	end
 
 	if initOptions then
@@ -127,12 +140,16 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 				local rigMethodName = clientMethodName:gsub("^(%L[^%L]+)(%L[^%L]+)", "%1Rig%2")
 
 				if clientMethodName == "LoadTracks" then
-					self[clientMethodName] = function(self, ...)
-						return v(self, player, "Player", ...)
+					self[clientMethodName] = function(self)
+						return v(self, player, "Player")
 					end
 
-					self[rigMethodName] = function(self, rig, rigType, ...)
-						return v(self, rig, rigType, ...)
+					self[rigMethodName] = function(self, rig, rigType)
+						return v(self, rig, rigType)
+					end
+				elseif clientMethodName == "GetAnimationProfile" then
+					self[clientMethodName] = function(self, animationProfileName)
+						return v(self, animationProfileName)
 					end
 				else
 					self[clientMethodName] = function(self, ...)
@@ -165,7 +182,13 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 	local function initCustomRBXAnimationIdsSignal()
 		local function applyCustomRBXAnimationIds()
 			RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait(), the running animation bugs if they are moving when this function is called.
-			player.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
+			
+			local char = player.Character
+			local hum = char:FindFirstChild("Humanoid")
+			
+			if hum then
+				hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
+			end
 		end
 		
 		self.ApplyCustomRBXAnimationIdsSignal = Signal.new()
@@ -226,6 +249,47 @@ end
 	
 	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
 
+	:::tip
+	See [`ApplyAnimationProfile()`](#ApplyAnimationProfile) for a more convenient way of overriding default roblox character animations.
+	:::
+
+	```lua
+	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
+
+	Animations:Init()
+
+	task.wait(5)
+
+	print("Applying r15 ninja jump & idle animations")
+
+	-- These animations will only work if your character is R15
+	Animations:ApplyCustomRBXAnimationIds({
+		[Enum.HumanoidRigType.R15] = {
+			jump = 656117878,
+			idle = {
+				Animation1 = 656117400,
+				Animation2 = 656118341
+			}	
+		}
+	})
+	```
+]=]
+--[=[
+	@method ApplyRigCustomRBXAnimationIds
+	@within AnimationsClient
+	@yields
+	@param rig Model
+	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
+	
+	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the `rig`. Yields if the `rig`'s humanoid or animate script aren't immediately available.
+
+	:::warning
+	This function only works for R6/R15 NPCs that are local to the client or network-owned by the client and have a client-side `"Animate"` script in their model.
+	:::
+	:::tip
+	See [`ApplyRigAnimationProfile()`](#ApplyRigAnimationProfile) for a more convenient way of overriding default roblox character animations.
+	:::
+
 	```lua
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
 
@@ -249,6 +313,15 @@ end
 ]=]
 
 --[=[
+	@method GetAnimationProfile
+	@within AnimationsClient
+	@param animationProfileName string
+	@return animationProfile humanoidRigTypeToCustomRBXAnimationIds?
+	
+	Returns the [`humanoidRigTypeToCustomRBXAnimationIds`](api/AnimationsServer#humanoidRigTypeToCustomRBXAnimationIds) table found in the profile module script `Deps<animationProfileName>`, or not if it doesn't exist.
+]=]
+
+--[=[
 	@method ApplyAnimationProfile
 	@within AnimationsClient
 	@yields
@@ -257,7 +330,23 @@ end
 	Applies the animation ids found in the animation profile on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
 	
 	:::info
-	For more information on setting up animated objects check out [animation profiles tutorial](/docs/animation-profiles).
+	For more information on setting up animation profiles check out [animation profiles tutorial](/docs/animation-profiles).
+	:::
+]=]
+--[=[
+	@method ApplyRigAnimationProfile
+	@within AnimationsClient
+	@yields
+	@param rig Model
+	@param animationProfileName string
+	
+	Applies the animation ids found in the animation profile on the `rig`. Yields if the `rig`'s humanoid or animate script aren't immediately available.
+	
+	:::warning
+	This function only works for R6/R15 NPCs that are local to the client or network-owned by the client and have a client-side `"Animate"` script in their model.
+	:::
+	:::info
+	For more information on setting up animation profiles check out [animation profiles tutorial](/docs/animation-profiles).
 	:::
 ]=]
 
@@ -378,6 +467,24 @@ end
 	@return AnimationTrack
 
 	Returns a stopped `rig` animation track.
+]=]
+
+--[=[
+	@method StopAllTracks
+	@within AnimationsClient
+	@param fadeTime number?
+	@return {AnimationTrack?}
+
+	Returns the stopped client animation tracks.
+]=]
+--[=[
+	@method StopRigAllTracks
+	@within AnimationsClient
+	@param rig Model
+	@param fadeTime number?
+	@return {AnimationTrack?}
+
+	Returns the stopped `rig` animation tracks.
 ]=]
 
 --[=[
@@ -570,10 +677,16 @@ end
 	@tag Beta
 	@method AttachAnimatedObject
 	@within AnimationsClient
-	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+	@param animatedObjectPath path
 
 	Attaches the animated object to the client's character.
 
+	:::note
+	This does not replicate to the server.
+	:::
+	:::tip
+	Enable [`initOptions.AnimatedObjectsDebugMode`](/api/AnimationsClient/#initOptions) for detailed prints about animated objects.
+	:::
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
 	:::
@@ -583,10 +696,16 @@ end
 	@method AttachRigAnimatedObject
 	@within AnimationsClient
 	@param rig Model
-	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+	@param animatedObjectPath path
 
 	Attaches the animated object to the `rig`.
 
+	:::note
+	This does not replicate to the server.
+	:::
+	:::tip
+	Enable [`initOptions.AnimatedObjectsDebugMode`](/api/AnimationsClient/#initOptions) for detailed prints about animated objects.
+	:::
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
 	:::
@@ -596,10 +715,16 @@ end
 	@tag Beta
 	@method DetachAnimatedObject
 	@within AnimationsClient
-	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+	@param animatedObjectPath path
 
 	Detaches the animated object from the client's character.
 
+	:::note
+	This does not replicate to the server.
+	:::
+	:::tip
+	Enable [`initOptions.AnimatedObjectsDebugMode`](/api/AnimationsClient/#initOptions) for detailed prints about animated objects.
+	:::
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
 	:::
@@ -609,10 +734,16 @@ end
 	@method DetachRigAnimatedObject
 	@within AnimationsClient
 	@param rig Model
-	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+	@param animatedObjectPath path
 
 	Detaches the animated object from the `rig`.
 
+	:::note
+	This does not replicate to the server.
+	:::
+	:::tip
+	Enable [`initOptions.AnimatedObjectsDebugMode`](/api/AnimationsClient/#initOptions) for detailed prints about animated objects.
+	:::
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
 	:::

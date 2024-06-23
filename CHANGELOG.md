@@ -1,3 +1,39 @@
+## v2.0.0-alpha
+> ###### 6/20/2024
+
+----
+
+- Changes (breaking)
+    - **[Beta]** Changed the animated object specifier parameter of [`Animations:AttachAnimatedObject()`](/api/AnimationsServer/#AttachAnimatedObject) and [`Animations:DetachAnimatedObject()`](/api/AnimationsServer/#DetachAnimatedObject) to just a [`path`](/api/AnimationsServer/#path) type.
+    - **[Beta]** Changed [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject) *optional* parameter `autoAttachDetachSettings?` -> to -> *required* parameter `animatedObjectSettings`.
+
+
+- Enhancements
+    - Added [`Animations:StopAllTracks()`](/api/AnimationsServer/#StopAllTracks). [Issue #39](https://github.com/wrello/Animations/issues/39)
+    - Added [`Animations:GetAnimationProfile()`](/api/AnimationsServer/#GetAnimationProfile). [Issue #29](https://github.com/wrello/Animations/issues/29)
+    - Added information on the all too common [`"Animator.EvaluationThrottled"`](/docs/animator-error) error. [Issue #38](https://github.com/wrello/Animations/issues/38)
+    - Added R6/R15 NPC support for [`Animations:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) and [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) on client & server. There are caveats when using these, be sure to read documentation. [Issue #41](https://github.com/wrello/Animations/issues/41)
+    - Added more clear usage description of [`animation profiles`](/docs/animation-profiles). [Issue #34](https://github.com/wrello/Animations/issues/34)
+    - **[Beta]** Added optional parameter `DoUnpack?` for [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject).
+    - Added warning and yield until the server initializes ([`AnimationsClient:Init()`](/api/AnimationsClient/#Init)). [Issue #37](https://github.com/wrello/Animations/issues/37)
+    - [`AnimationsServer:LoadTracks()`](/api/AnimationsServer/#LoadTracks) now automatically applies `rigType` of `"Player"` if no `rigType` is specified and the `player_or_rig` is a player or player's character.
+    - Rewrite of animated objects system (still in beta).
+
+
+- Changes (non-breaking)
+    - **[Beta]** Changed [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject) to no longer require a `RunContext` in `autoAttachDetachSettings?` (which is now `animatedObjectSettings`). It will now automatically run on client & server. [Issue #31](https://github.com/wrello/Animations/issues/31)
+
+
+- Fixes
+    - Fixed memory leak associated with trusting that the `Player.Character.Destroying` event would fire when a character model got removed from the game.
+    - Fixed [`"Animator.EvaluationThrottled"`](/docs/animator-error) error caused by [`Animations.TimeToLoadPrints`](/api/AnimationsServer/#initOptions).
+    - Fixed problem with string paths involving utility function `GetChildFromPath()`. [Issue #40](https://github.com/wrello/Animations/issues/40) 
+    - Fixed auto detach of animated objects being bugged. [Issue #36](https://github.com/wrello/Animations/issues/36)
+    - Fixed right grip weld not getting disabled for multiple animated object equips. [Issue #30](https://github.com/wrello/Animations/issues/30)
+    - Fixed animation ids not being able to attach to multiple animated objects. [Issue #32](https://github.com/wrello/Animations/issues/32)
+    - Fixed incorrect type for [`AnimationsServer:StopTracksOfPriority()`](/api/AnimationsServer/#StopTracksOfPriority). [Issue #33](https://github.com/wrello/Animations/issues/33)
+    - Fixed documentation mistakes. [Issue #35](https://github.com/wrello/Animations/issues/35)
+
 ## v1.3.0
 > ###### 5/6/2024
 
@@ -7,6 +43,7 @@
     - Added [`animation profiles`](docs/animation-profiles). [Issue #22](https://github.com/wrello/Animations/issues/22)
     - Added [`Animations:StopTracksOfPriority()`](/api/AnimationsServer/#StopTracksOfPriority). [Issue #26](https://github.com/wrello/Animations/issues/26)
     - Errors if no "animator parent" (`Humanoid` or `AnimationController`) exists in the rig. [Issue #27](https://github.com/wrello/Animations/issues/27)
+
 
 - Fixes
     - Fixed calling `Humanoid:ChangeState()` when it shouldn't be called. [Issue #28](https://github.com/wrello/Animations/issues/28)
@@ -21,6 +58,7 @@
 - Enhancements
     - Added [`AnimationsClient:ApplyCustomRBXAnimationIds()`](/api/AnimationsClient/#ApplyCustomRBXAnimationIds). [Issue #21](https://github.com/wrello/Animations/issues/21)
 
+
 - Fixes
     - Fixed [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) not updating the animations until after the player moved.
 
@@ -33,8 +71,10 @@
     - **[Beta]** Added [`Animations:AttachAnimatedObject()`](/api/AnimationsServer/#AttachAnimatedObject), [`Animations:DetachAnimatedObject()`](/api/AnimationsServer/#DetachAnimatedObject) methods, [`HasAnimatedObject`](/api/AnimationIds/#HasAnimatedObject) function in the [`AnimationIds`](/api/AnimationIds) module, and an [animated objects tutorial](/docs/animated-objects). [Issue #15](https://github.com/wrello/Animations/issues/15)
     - Added a tip that `"walk"` is the animation id that is applied for `R6` characters and `"run"` is the animation id that is applied for `R15` characters when using [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds). [Issue #20](https://github.com/wrello/Animations/issues/20)
 
+
 - Changes (non-breaking)
     - Changed `ASSET_ID_STR` to format an integer instead of a float. [Issue #19](https://github.com/wrello/Animations/issues/19)
+
 
 - Fixes
     - Fixed lots of documentation and typing errors, especially related to `CustomRBXAnimationIds` which is now [`humanoidRigTypeToCustomRBXAnimationIds`](/api/AnimationsServer/#humanoidRigTypeToCustomRBXAnimationIds).
@@ -57,8 +97,9 @@
 ----
 
 - Enhancements
-    - Put both client and server animation modules in `--!strict` mode. This allowed for a lot of typing fixes.
+    - Put both client & server animation modules in `--!strict` mode. This allowed for a lot of typing fixes.
     - Added a warning `Infinite yield possible on 'player_or_rig.CharacterAdded():Wait()'` that occurs whenever the `getRig()` helper function is called if the player's character doesn't exist after 5 seconds. This is helpful if `Players.CharacterAutoLoads` is not enabled and `getRig()` gets called.
+
 
 - Fixes
     - Fixed `initOptions.AutoCustomRBXAnimationIds` not working because it was named incorrectly. New name is `initOptions.EnableAutoCustomRBXAnimationIds`. [AnimationsServer initOptions](/api/AnimationsServer/#initOptions)
@@ -74,6 +115,7 @@
     - [`Animations:LoadTracks()`](/api/AnimationsClient#LoadTracks) now automatically gives the rig an attribute `AnimationsRigType` set to the given [`rigType`](/api/AnimationIds#rigType) (which is "Player" when the client calls it). [Issue #9](https://github.com/wrello/Animations/issues/9)
     - Explained a convenient feature when using [`Animations:SetTrackAlias()`](/api/AnimationsClient#SetTrackAlias) in the documentation of the function.
 
+
 - Fixes
     - Fixed [`Animations:GetTrackFromAlias()`](/api/AnimationsClient#GetTrackFromAlias) not working. [Issue #10](https://github.com/wrello/Animations/issues/10)
     - Fixed `Util.ChildFromPath` bug that caused errors when the `parent` became nil during the recursion. [Issue #7](https://github.com/wrello/Animations/issues/7)
@@ -84,7 +126,8 @@
 ----
 
 - Enhancements
-    - Added assertions to check `AnimationsClient` and `AnimationsServer` are being required on the client and server respectively. [Issue #4](https://github.com/wrello/Animations/issues/4)
+    - Added assertions to check `AnimationsClient` and `AnimationsServer` are being required on the client & server respectively. [Issue #4](https://github.com/wrello/Animations/issues/4)
+
 
 - Fixes
     - Fixed subsequent `Animations:AwaitLoaded()` calls getting discarded. [Issue #5](https://github.com/wrello/Animations/issues/5)

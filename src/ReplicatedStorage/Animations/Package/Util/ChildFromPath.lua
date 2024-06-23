@@ -9,8 +9,8 @@ local function ChildFromPath(parent, path, index)
 	if typeof(path) == "string" then -- A path string. Ex. "MyChild.MyDescendant" or "MyChild"
 		local childKey, period = path:match("^([^%.]+)(%.?)")
 
-		if childKey  then
-			path = path:gsub(childKey .. period, "")
+		if childKey then
+			path = path:gsub(childKey .. ((period and period ~= "" and "%.") or ""), "", 1)
 
 			if typeof(parent) == "Instance" then
 				return ChildFromPath(parent:FindFirstChild(childKey), path)

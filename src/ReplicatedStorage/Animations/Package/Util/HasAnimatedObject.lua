@@ -1,15 +1,15 @@
 local function HasAnimatedObject(
-	animationId: number | {}, 
-	animatedObjectPath: {any} | string, 
-	autoAttachDetachSettings: {
-		RunContext: "Client" | "Server",
+	animationId: number | {},
+	animatedObjectPath: {any} | string,
+	animatedObjectSettings: {
 		AutoAttach: boolean?,
-		AutoDetach: boolean?
-	}?
+		AutoDetach: boolean?,
+		DoUnpack: boolean?, -- Sets the key value pairs for everything up one level instead of in the passed animation ids able
+	}
 ): {}
 	local animatedObjectInfo = {
 		AnimatedObjectPath = animatedObjectPath,
-		AutoAttachDetachSettings = autoAttachDetachSettings
+		AnimatedObjectSettings = animatedObjectSettings
 	}
 
 	if type(animationId) == "table" then

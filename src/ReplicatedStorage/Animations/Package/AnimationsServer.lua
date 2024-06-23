@@ -42,7 +42,7 @@ type AnimationsServerInitOptionsType = Types.AnimationsServerInitOptionsType
 	```
 ]=]
 
-local Animations = AnimationsClass.new()
+local Animations = AnimationsClass.new(script.Name)
 
 --[=[
 	@class AnimationsServer
@@ -97,7 +97,7 @@ AnimationsServer.AnimatedObjectsDebugMode = false
 	Initializes `AnimationsServer`.
 	
 	:::info
-	Should be called once before any other method.
+	Should be called once before any other method. Clients are unable to initialize until this gets called.
 	:::
 ]=]
 function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
@@ -164,6 +164,8 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	
 	initCustomRBXAnimationIdsSignal()
 	initOnPlayerAdded()
+	
+	script:SetAttribute("Initialized", true)
 end
 
 --[=[
@@ -198,10 +200,17 @@ end
 	@method ApplyCustomRBXAnimationIds
 	@within AnimationsServer
 	@yields
-	@param player Player
+	@param player_or_rig Player | Model
 	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
 
-	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the `player`'s character. Yields if their character, humanoid, animator, or animate script aren't immediately available.
+	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the player or rig. Yields if the player's character, player or rig's humanoid, player's animator, or player or rig's animate script aren't immediately available.
+
+	:::warning
+	This function only works for players and R6/R15 NPCs that have an `"Animate"` script in their model.
+	:::
+	:::tip
+	See [`ApplyAnimationProfile()`](#ApplyAnimationProfile) for a more convenient way of overriding default roblox character animations.
+	:::
 
 	```lua
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
@@ -226,14 +235,25 @@ end
 ]=]
 
 --[=[
+	@method GetAnimationProfile
+	@within AnimationsServer
+	@param animationProfileName string
+	@return animationProfile humanoidRigTypeToCustomRBXAnimationIds?
+	
+	Returns the [`humanoidRigTypeToCustomRBXAnimationIds`](api/AnimationsServer#humanoidRigTypeToCustomRBXAnimationIds) table found in the profile module `Deps.<animationProfileName>`, or not if it doesn't exist.
+]=]
+--[=[
 	@method ApplyAnimationProfile
 	@within AnimationsServer
 	@yields
-	@param player player
+	@param player_or_rig Player | Model
 	@param animationProfileName string
 	
-	Applies the animation ids found in the animation profile on the `player`'s character. Yields if their character, humanoid, animator, or animate script aren't immediately available.
+	Applies the animation ids found in the animation profile on the player or rig. Yields if the player's character, player or rig's humanoid, player's animator, or player or rig's animate script aren't immediately available.
 	
+	:::warning
+	This function only works for players and R6/R15 NPCs that have an `"Animate"` script in their model.
+	:::
 	:::info
 	For more information on setting up animated objects check out [animation profiles tutorial](/docs/animation-profiles).
 	:::
@@ -278,9 +298,9 @@ end
 	@within AnimationsServer
 	@yields
 	@param player_or_rig Player | Model
-	@param rigType string
+	@param rigType string?
 	
-	Yields while the player or rig's animation tracks load.
+	Yields while the player or rig's animation tracks load. If `rigType` is not provided and `player_or_rig` is a player or player's character then it will default to `"Player"`.
 
 	:::tip
 	Automatically gives the rig an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType).
@@ -322,6 +342,16 @@ end
 ]=]
 
 --[=[
+	@method StopAllTracks
+	@within AnimationsServer
+	@param player_or_rig Player | Model
+	@param fadeTime number?
+	@return {AnimationTrack?}
+
+	Returns the stopped player or rig animation tracks.
+]=]
+
+--[=[
 	@method StopTracksOfPriority
 	@within AnimationsServer
 	@param player_or_rig Player | Model
@@ -329,7 +359,7 @@ end
 	@param fadeTime number?
 	@return {AnimationTrack?}
 
-	Returns the stopped player or rig's animation tracks.
+	Returns the stopped player or rig animation tracks.
 ]=]
 
 --[=[
@@ -457,10 +487,13 @@ end
 	@method AttachAnimatedObject
 	@within AnimationsServer
 	@param player_or_rig Player | Model
-	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+	@param animatedObjectPath path
 
-	Attaches the animated object to the rig.
+	Attaches the animated object to the player or rig.
 
+	:::tip
+	Enable [`initOptions.AnimatedObjectsDebugMode`](/api/AnimationsServer/#initOptions) for detailed prints about animated objects.
+	:::
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
 	:::
@@ -471,10 +504,13 @@ end
 	@method DetachAnimatedObject
 	@within AnimationsServer
 	@param player_or_rig Player | Model
-	@param animatedObjectSourcePath_or_animationTrack_or_animatedObject path | AnimationTrack | Instance
+	@param animatedObjectPath path
 
-	Detaches the animated object from the rig (destroys them).
+	Detaches the animated object from the player or rig.
 
+	:::tip
+	Enable [`initOptions.AnimatedObjectsDebugMode`](/api/AnimationsServer/#initOptions) for detailed prints about animated objects.
+	:::
 	:::info
 	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
 	:::
