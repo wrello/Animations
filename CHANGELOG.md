@@ -12,7 +12,7 @@
     - Added [`Animations:StopAllTracks()`](/api/AnimationsServer/#StopAllTracks). [Issue #39](https://github.com/wrello/Animations/issues/39)
     - Added [`Animations:GetAnimationProfile()`](/api/AnimationsServer/#GetAnimationProfile). [Issue #29](https://github.com/wrello/Animations/issues/29)
     - Added information on the all too common [`"Animator.EvaluationThrottled"`](/docs/animator-error) error. [Issue #38](https://github.com/wrello/Animations/issues/38)
-    - Added R6/R15 NPC support for [`Animations:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) and [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) on client & server. There are caveats when using these, be sure to read documentation. [Issue #41](https://github.com/wrello/Animations/issues/41)
+    - Added R6/R15 NPC support for [`Animations:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) and [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer/#ApplyAnimationProfile) on client & server. There are caveats when using these, be sure to read documentation. [Issue #41](https://github.com/wrello/Animations/issues/41)
     - Added more clear usage description of [`animation profiles`](/docs/animation-profiles). [Issue #34](https://github.com/wrello/Animations/issues/34)
     - **[Beta]** Added optional parameter `DoUnpack?` for [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject).
     - Added warning and yield until the server initializes ([`AnimationsClient:Init()`](/api/AnimationsClient/#Init)). [Issue #37](https://github.com/wrello/Animations/issues/37)
