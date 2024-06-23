@@ -15,7 +15,7 @@
     - Added R6/R15 NPC support for [`Animations:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) and [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer/#ApplyAnimationProfile) on client & server. There are caveats when using these, be sure to read documentation. [Issue #41](https://github.com/wrello/Animations/issues/41)
     - Added more clear usage description of [`animation profiles`](/docs/animation-profiles). [Issue #34](https://github.com/wrello/Animations/issues/34)
     - **[Beta]** Added optional parameter `DoUnpack?` for [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject).
-    - Added warning and yield until the server initializes ([`AnimationsClient:Init()`](/api/AnimationsClient/#Init)). [Issue #37](https://github.com/wrello/Animations/issues/37)
+    - Added warning and yield until the server initializes in [`AnimationsClient:Init()`](/api/AnimationsClient/#Init). [Issue #37](https://github.com/wrello/Animations/issues/37)
     - [`AnimationsServer:LoadTracks()`](/api/AnimationsServer/#LoadTracks) now automatically applies `rigType` of `"Player"` if no `rigType` is specified and the `player_or_rig` is a player or player's character.
     - Rewrite of animated objects system (still in beta).
 
