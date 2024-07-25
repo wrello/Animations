@@ -150,7 +150,7 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	
 	local function bootstrapDepsFolder()
 		local depsFolder
-
+		
 		if self.DepsFolderPath then
 			local ok
 			ok, depsFolder = pcall(ChildFromPath, game, self.DepsFolderPath)
@@ -216,6 +216,41 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	self._initialized = true -- Need to initialize before using methods in the function below
 	initOnPlayerSpawn()
 end
+
+--[=[
+	@method AwaitPreloadAsyncFinished
+	@yields
+	@within AnimationsServer
+	@return {Animation?}
+
+	Yields until `ContentProvider:PreloadAsync()` finishes pre-loading all animation instances.
+
+	```lua
+	-- In a ServerScript
+	local loadedAnimInstances = Animations:AwaitPreloadAsyncFinished()
+		
+	print("ContentProvider:PreloadAsync() finished pre-loading all:", loadedAnimInstances)
+	```
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@prop PreloadAsyncProgressed RBXScriptSignal
+	@within AnimationsServer
+
+	Fires when `ContentProvider:PreloadAsync()` finishes pre-loading one animation instance.
+
+	```lua
+	-- In a ServerScript
+	Animations.PreloadAsyncProgressed:Connect(function(n, total, loadedAnimInstance)
+		print("ContentProvider:PreloadAsync() finished pre-loading one:", n, total, loadedAnimInstance)
+	end)
+	```
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
 
 --[=[
 	@interface customRBXAnimationIds

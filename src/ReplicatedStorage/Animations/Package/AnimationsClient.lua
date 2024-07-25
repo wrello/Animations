@@ -205,7 +205,9 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 			if type(v) == "function" and not k:match("^_") then
 				local clientMethodName = k
 
-				if clientMethodName ~= "GetAnimationProfile" then
+				if clientMethodName ~= "GetAnimationProfile"
+					and clientMethodName ~= "AwaitPreloadAsyncFinished"
+				then
 					local rigMethodName = manualRigMethodNames[clientMethodName] or clientMethodName:gsub("^(%L[^%L]+)(%L?[^%L]*)", "%1Rig%2")
 
 					self[clientMethodName] = function(self, ...)
@@ -218,8 +220,6 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 				end
 			end
 		end
-
-		print("finished")
 	end
 
 	local function initOnPlayerSpawn()
@@ -281,6 +281,41 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 	self._initialized = true -- Need to initialize before using methods in the function below
 	initOnPlayerSpawn()
 end
+
+--[=[
+	@method AwaitPreloadAsyncFinished
+	@yields
+	@within AnimationsClient
+	@return {Animation?}
+
+	Yields until `ContentProvider:PreloadAsync()` finishes pre-loading all animation instances.
+
+	```lua
+	-- In a LocalScript
+	local loadedAnimInstances = Animations:AwaitPreloadAsyncFinished()
+		
+	print("ContentProvider:PreloadAsync() finished pre-loading all:", loadedAnimInstances)
+	```
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@prop PreloadAsyncProgressed RBXScriptSignal
+	@within AnimationsClient
+
+	Fires when `ContentProvider:PreloadAsync()` finishes pre-loading one animation instance.
+
+	```lua
+	-- In a LocalScript
+	Animations.PreloadAsyncProgressed:Connect(function(n, total, loadedAnimInstance)
+		print("ContentProvider:PreloadAsync() finished pre-loading one:", n, total, loadedAnimInstance)
+	end)
+	```
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
 
 --[=[
 	@interface customRBXAnimationIds

@@ -1,7 +1,9 @@
 ## v2.0.0-rc1
-> ###### 7/23/2024
+> ###### 7/25/2024
 
 ----
+
+[Migrate to v2.0.0 guide](/docs/migrate-to-2.0.0)
 
 - Changes (breaking)
     - Changed init option ~~`Animations.AutoLoadPlayerTracks`~~ -> to -> [`Animations.AutoLoadAllPlayerTracks`](/api/AnimationsServer/#AutoLoadAllPlayerTracks) in order to match the new [`Animations:LoadAllTracks()`](/api/AnimationsServer/#LoadAllTracks). [Issue #43](https://github.com/wrello/Animations/issues/43)
@@ -13,13 +15,15 @@
 
 - Enhancements
     - Wally support.
+    - Added method [`Animations:AwaitPreloadAsyncFinished()`](/api/AnimationsServer/#AwaitPreloadAsyncFinished).
+    - Added methods [`Animations:Register()`](/api/AnimationsServer/#Register)/[`Animations:AwaitRegistered()`](/api/AnimationsServer/#AwaitRegistered)/[`Animations:IsRegistered()`](/api/AnimationsServer/#IsRegistered). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Added methods [`Animations:LoadTracksAt()`](/api/AnimationsServer/#LoadTracksAt)/[`Animations:AwaitTracksLoadedAt()`](/api/AnimationsServer/#AwaitTracksLoadedAt)/[`Animations:AreTracksLoadedAt()`](/api/AnimationsServer/#AreTracksLoadedAt). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Added event [`Animations.PreloadAsyncProgressed`](/api/AnimationsServer/#PreloadAsyncProgressed).
     - Added init option [`Animations.DepsFolderPath`](/api/AnimationsServer/#DepsFolderPath). [Issue #46](https://github.com/wrello/Animations/issues/46)
     - Added [`Animations:GetPlayingTracks()`](/api/AnimationsServer/#GetPlayingTracks). [Issue #42](https://github.com/wrello/Animations/issues/42)
     - Added init option [`AnimationsClient.EnableAutoCustomRBXAnimationIds`](/api/AnimationsClient/#EnableAutoCustomRBXAnimationIds).
     - Added init option [`AnimationsClient.AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer)/[`AnimationsServer.AutoRegisterPlayers`](/api/AnimationsServer/#AutoRegisterPlayers). [Issue #43](https://github.com/wrello/Animations/issues/43)
-    - Added specific animation loading type methods [`Animations:LoadTracksAt()`](/api/AnimationsServer/#LoadTracksAt)/[`Animations:AwaitTracksLoadedAt()`](/api/AnimationsServer/#AwaitTracksLoadedAt)/[`Animations:AreTracksLoadedAt()`](/api/AnimationsServer/#AreTracksLoadedAt). [Issue #43](https://github.com/wrello/Animations/issues/43)
-    - Added registration type methods [`Animations:Register()`](/api/AnimationsServer/#Register)/[`Animations:AwaitRegistered()`](/api/AnimationsServer/#AwaitRegistered)/[`Animations:IsRegistered()`](/api/AnimationsServer/#IsRegistered). [Issue #43](https://github.com/wrello/Animations/issues/43)
-
+    
 
 - Changes (non-breaking)
     - Changed init option [`AnimationsServer.TimeToLoadPrints`](/api/AnimationsServer/#TimeToLoadPrints) to default to `true` because it's important to realize that initialization can yield for quite some time during `ContentProvider:PreloadAsync()` on all animations in the [`AnimationIds`](/api/AnimationIds) module. [Issue #44](https://github.com/wrello/Animations/issues/44)

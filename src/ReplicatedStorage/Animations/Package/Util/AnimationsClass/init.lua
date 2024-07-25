@@ -78,16 +78,6 @@ local function clearTracks(currentSet)
 	table.clear(currentSet)
 end
 
-local function createAnimationInstance(animationName, animationId)
-	local animation = Instance.new("Animation")
-	animation.Name = animationName
-	animation.AnimationId = ANIM_ID_STR:format(animationId)
-
-	ContentProvider:PreloadAsync({animation})
-
-	return animation
-end
-
 local function getAnimator(player_or_rig, rig)
 	local animatorParent = (player_or_rig.ClassName == "Player" and rig:WaitForChild("Humanoid")) or rig:FindFirstChild("Humanoid") or rig:FindFirstChild("AnimationController")
 
@@ -151,6 +141,16 @@ AnimationsClass.__index = AnimationsClass
 --------------------
 -- INITIALIZATION --
 --------------------
+function AnimationsClass:_createAnimationInstance(animationName, animationId)
+	local animation = Instance.new("Animation")
+	animation.Name = animationName
+	animation.AnimationId = ANIM_ID_STR:format(animationId)
+	
+	table.insert(self._preloadAsyncArray, animation)
+	
+	return animation
+end
+
 function AnimationsClass:_bootstrapDepsFolder(depsFolder)
 	AnimationIds = require(depsFolder.AnimationIds)
 	animatedObjectsFolder = depsFolder.AnimatedObjects
@@ -172,7 +172,7 @@ function AnimationsClass:_animationIdsToInstances()
 	end
 
 	local function replaceAnimationIdWithAnimationInstance(idTable, animationIndex, animationId)
-		self.AnimationInstancesCache[animationId] = self.AnimationInstancesCache[animationId] or createAnimationInstance(tostring(animationIndex), animationId)
+		self.AnimationInstancesCache[animationId] = self.AnimationInstancesCache[animationId] or self:_createAnimationInstance(tostring(animationIndex), animationId)
 
 		idTable[animationIndex] = self.AnimationInstancesCache[animationId]
 	end
@@ -257,11 +257,27 @@ function AnimationsClass:_animationIdsToInstances()
 		end
 	end
 
+	local function preloadAsync()
+		local len = #self._preloadAsyncArray
+		for i, animation in ipairs(self._preloadAsyncArray) do
+			ContentProvider:PreloadAsync({animation})
+			self.PreloadAsyncProgressed:Fire(i, len, animation)
+		end
+
+		local clone = table.clone(self._preloadAsyncArray)
+
+		table.clear(self._preloadAsyncArray)
+		self._preloadAsyncArray = nil
+
+		self.PreloadAsyncFinishedSignal:Fire(clone)
+	end
+
 	for _, idTable in pairs(AnimationIds) do
 		initializeAnimationIds(idTable)
 	end
 
 	hasAnimatedObjectUnpackAll()
+	preloadAsync()
 
 	if self.TimeToLoadPrints then
 		print(string.format("Finished ContentProvider:PreloadAsync() on animations after %.2f seconds", os.clock() - s))
@@ -275,7 +291,11 @@ function AnimationsClass.new(moduleName)
 	local self = setmetatable({}, AnimationsClass)
 
 	self._moduleName = moduleName
+	self._preloadAsyncArray = {}
 
+	self.PreloadAsyncProgressed = Signal.new()
+	
+	self.PreloadAsyncFinishedSignal = Signal.new()
 	self.FinishedLoadingSignal = Signal.new()
 	self.RegisteredRigSignal = Signal.new()
 	self.AnimationInstanceToAnimatedObjectInfo = {}
@@ -333,6 +353,8 @@ function AnimationsClass:_aliasesRegisterPlayer(player)
 end
 
 function AnimationsClass:_getTrack(player_or_rig, path, isAlias)
+	CustomAssert(path ~= nil, "Path is nil")
+
 	local rig = getRig(player_or_rig)
 	self:_rigRegisteredAssertion(rig, "unable to get track at path [", path, "]")
 
@@ -350,6 +372,8 @@ function AnimationsClass:_getTrack(player_or_rig, path, isAlias)
 end
 
 function AnimationsClass:_playStopTrack(play_stop, player_or_rig, path, isAlias, fadeTime, weight, speed)
+	CustomAssert(path ~= nil, "Path is nil")
+	
 	local track = self:_getTrack(player_or_rig, path, isAlias)
 	CustomAssert(track, "No track found at path [", path, "]", "for [", player_or_rig:GetFullName(), "]")
 
@@ -359,6 +383,8 @@ function AnimationsClass:_playStopTrack(play_stop, player_or_rig, path, isAlias,
 end
 
 function AnimationsClass:_setTrackAlias(player_or_rig, alias, path)
+	CustomAssert(path ~= nil, "Path is nil")
+
 	local modifiedPath
 
 	if type(path) == "table" then
@@ -508,13 +534,15 @@ function AnimationsClass:_applyCustomRBXAnimationIds(player_or_rig, humanoidRigT
 end
 
 function AnimationsClass:_loadTracksAt(player_or_rig, path)
+	CustomAssert(path ~= nil, "Path is nil")
+
 	local rig = getRig(player_or_rig)
 	self:_rigRegisteredAssertion(rig, "unable to load tracks at path [", path or ALL_ANIMS_MARKER, "]")
 
 	local parent = self.PerRig.LoadedTracks[rig]
 	local instance_or_id_table, parent_id_table, animationName = parent, nil, nil
 
-	if path then
+	if path ~= ALL_ANIMS_MARKER then
 		if type(path) == "string" then
 			parent_id_table = ChildFromPath(parent, path:gsub("(%.?[^.]+)$", function(s)
 				animationName = s:sub(-#s-1)
@@ -536,6 +564,10 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 	end
 
 	local animator = getAnimator(rig, rig)
+
+	while not animator:IsDescendantOf(workspace) do
+		animator.AncestryChanged:Wait()
+	end
 
 	if type(instance_or_id_table) == "userdata" then
 		if instance_or_id_table.ClassName == "AnimationTrack" then
@@ -615,12 +647,14 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 end
 
 function AnimationsClass:_awaitTracksLoadedAt(player_or_rig, path)
+	CustomAssert(path ~= nil, "Path is nil")
+
 	local rig = getRig(player_or_rig)
 	self:AwaitRegistered(player_or_rig)
 
 	local parent = self.PerRig.LoadedTracks[rig]
 	local instance_or_id_table = parent
-	if path then
+	if path ~= ALL_ANIMS_MARKER then
 		local ok
 		ok, instance_or_id_table = pcall(ChildFromPath, parent, path)
 		CustomAssert(ok, "No track or id table found at path [", path, "in", parent, "]")
@@ -643,12 +677,14 @@ function AnimationsClass:_awaitTracksLoadedAt(player_or_rig, path)
 end
 
 function AnimationsClass:_areTracksLoadedAt(player_or_rig, path, parent, retIfNotFound)
+	CustomAssert(path ~= nil, "Path is nil")
+
 	local rig = getRig(player_or_rig)
 	self:_rigRegisteredAssertion(rig, "unable to check are tracks loaded at path [", path or ALL_ANIMS_MARKER, "]")
 
 	parent = parent or self.PerRig.LoadedTracks[rig]
 	local instance_or_id_table = parent
-	if path then
+	if path ~= ALL_ANIMS_MARKER then
 		local ok
 		ok, instance_or_id_table = pcall(ChildFromPath, parent, path)
 
@@ -671,6 +707,14 @@ end
 -------------
 -- PUBLIC --
 -------------
+function AnimationsClass:AwaitPreloadAsyncFinished()
+	if self._preloadAsyncArray then
+		return self.PreloadAsyncFinishedSignal:Wait()
+	end
+
+	return RAN_FULL_METHOD.No
+end
+
 function AnimationsClass:AttachAnimatedObject(player_or_rig: Player | Model, animatedObjectPath: {any} | string)
 	self:_initializedAssertion()
 
@@ -692,7 +736,7 @@ end
 function AnimationsClass:AreAllTracksLoaded(player_or_rig: Player | Model): boolean
 	self:_initializedAssertion()
 
-	return not not self:_areTracksLoadedAt(player_or_rig)
+	return not not self:_areTracksLoadedAt(player_or_rig, ALL_ANIMS_MARKER)
 end
 
 function AnimationsClass:AwaitTracksLoadedAt(player_or_rig: Player | Model, path: {any} | string): Types.RanFullMethodType
@@ -704,7 +748,7 @@ end
 function AnimationsClass:AwaitAllTracksLoaded(player_or_rig: Player | Model): Types.RanFullMethodType
 	self:_initializedAssertion()
 
-	return self:_awaitTracksLoadedAt(player_or_rig)
+	return self:_awaitTracksLoadedAt(player_or_rig, ALL_ANIMS_MARKER)
 end
 
 function AnimationsClass:LoadTracksAt(player_or_rig: Player | Model, path: {any} | string): Types.RanFullMethodType
@@ -716,7 +760,7 @@ end
 function AnimationsClass:LoadAllTracks(player_or_rig: Player | Model): Types.RanFullMethodType
 	self:_initializedAssertion()
 
-	return self:_loadTracksAt(player_or_rig)
+	return self:_loadTracksAt(player_or_rig, ALL_ANIMS_MARKER)
 end
 
 function AnimationsClass:Register(player_or_rig: Player | Model, rigType: string?)

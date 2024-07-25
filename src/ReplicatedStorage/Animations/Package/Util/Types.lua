@@ -1,9 +1,19 @@
 --!strict
 
+type EventType<T> = {
+	Wait: (self: EventType<T>) -> (...any),
+	Connect: (self: EventType<T>, handler: T) -> RBXScriptConnection,
+	Once: (self: EventType<T>, handler: T) -> RBXScriptConnection,
+}
+
 export type RanFullMethodType = boolean -- Will be false if the method returned instantly
 
 export type AnimationsServerType = {
+	PreloadAsyncProgressed: EventType<(n: number, total: number, loadedAnimInstance: Animation) -> ()>,
+
 	Init: (self: AnimationsServerType, initOptions: AnimationsServerInitOptionsType?) -> (),
+
+	AwaitPreloadAsyncFinished: (self: AnimationsServerType) -> {Animation?} | RanFullMethodType,
 
 	LoadTracksAt: (self: AnimationsServerType, player_or_rig: Player | Model, path: {any} | string) -> RanFullMethodType,
 	LoadAllTracks: (self: AnimationsServerType, player_or_rig: Player | Model) -> RanFullMethodType,
@@ -42,7 +52,11 @@ export type AnimationsServerType = {
 	ApplyAnimationProfile: (self: AnimationsServerType, player_or_rig: Player | Model, animationProfileName: string) -> ()
 } & AnimationsServerInitOptionsType
 export type AnimationsClientType = {
+	PreloadAsyncProgressed: EventType<(n: number, total: number, loadedAnimInstance: Animation) -> ()>,
+
 	Init: (self: AnimationsClientType, initOptions: AnimationsClientInitOptionsType?) -> (),
+
+	AwaitPreloadAsyncFinished: (self: AnimationsClientType) -> {Animation?} | RanFullMethodType,
 
 	AwaitAllTracksLoaded: (self: AnimationsClientType) -> (),
 	AwaitAllRigTracksLoaded: (self: AnimationsClientType, rig: Model) -> (),
