@@ -1,16 +1,33 @@
 -- made by wrello
--- v1.1.1
+-- v1.2.0
 
 type EventWithSettingsType = {} -- {RBXScriptSignal, WinnerKey?, ...any?}
 type TimeoutType = (number | RBXScriptSignal)?
 
 local WINNER_KEY_FLAG = "winner key"
+local ALL_ARGUMENTS_CHECK_FLAG = "all arguments check"
+
+local function isWinnerKey(t)
+	if type(t) == "table" then
+		return t[1] == WINNER_KEY_FLAG
+	end
+end
+
+local function isAllArgumentsCheck(t)
+	if type(t) == "table" then
+		return t[1] == ALL_ARGUMENTS_CHECK_FLAG
+	end
+end
 
 local function argsMatchParams(params, ...)
 	local args = {...}
 	
 	for i, param in ipairs(params) do
-		if type(param) == "function" then
+		if isAllArgumentsCheck(param) then
+			if not param[2](...) then
+				return false
+			end
+		elseif type(param) == "function" then
 			if not param(args[i]) then -- Typechecking
 				return false
 			end
@@ -20,12 +37,6 @@ local function argsMatchParams(params, ...)
 	end
 
 	return true
-end
-
-local function isWinnerKey(t)
-	if type(t) == "table" then
-		return t[1] == WINNER_KEY_FLAG
-	end
 end
 
 local Await = {}
@@ -45,6 +56,10 @@ end
 ]]
 function Await.WinnerKey(token)
 	return {WINNER_KEY_FLAG, token}
+end
+
+function Await.AllArgumentsCheck(fn)
+	return {ALL_ARGUMENTS_CHECK_FLAG, fn}
 end
 
 -- Waits for the event with specific args to fire
@@ -208,7 +223,7 @@ function Await.First(timeout: TimeoutType, ...: RBXScriptSignal | EventWithSetti
 	
 	for i, event in ipairs({...}) do
 		local conn
-
+		
 		if event.Connect then
 			conn = event:Connect(function(...)
 				if conn.Connected then

@@ -1,3 +1,43 @@
+## v2.0.0-rc1
+> ###### 7/25/2024
+
+----
+
+[Migrate to v2.0.0 guide](/docs/migrate-to-2.0.0)
+
+- Changes (breaking)
+    - Changed init option ~~`Animations.AutoLoadPlayerTracks`~~ -> to -> [`Animations.AutoLoadAllPlayerTracks`](/api/AnimationsServer/#AutoLoadAllPlayerTracks) in order to match the new [`Animations:LoadAllTracks()`](/api/AnimationsServer/#LoadAllTracks). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Changed ~~`Animations:LoadTracks`~~ -> to -> [`Animations:LoadAllTracks()`](/api/AnimationsServer/#LoadAllTracks). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Changed ~~`Animations:AwaitLoaded()`~~ -> to -> [`Animations:AwaitAllTracksLoaded()`](/api/AnimationsServer/#AwaitAllTracksLoaded). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Changed ~~`Animations:AreTracksLoaded()`~~ -> to -> [`Animations:AreAllTracksLoaded()`](/api/AnimationsServer/#AreAllTracksLoaded). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Changed ~~`Animations:StopAllTracks()`~~ -> to -> [`Animations:StopPlayingTracks()`](/api/AnimationsServer/#StopPlayingTracks) in order to match the new [`Animations:GetPlayingTracks()`](/api/AnimationsServer/#GetPlayingTracks). [Issue #42](https://github.com/wrello/Animations/issues/42)
+
+
+- Enhancements
+    - Wally support.
+    - Added method [`Animations:AwaitPreloadAsyncFinished()`](/api/AnimationsServer/#AwaitPreloadAsyncFinished).
+    - Added methods [`Animations:Register()`](/api/AnimationsServer/#Register)/[`Animations:AwaitRegistered()`](/api/AnimationsServer/#AwaitRegistered)/[`Animations:IsRegistered()`](/api/AnimationsServer/#IsRegistered). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Added methods [`Animations:LoadTracksAt()`](/api/AnimationsServer/#LoadTracksAt)/[`Animations:AwaitTracksLoadedAt()`](/api/AnimationsServer/#AwaitTracksLoadedAt)/[`Animations:AreTracksLoadedAt()`](/api/AnimationsServer/#AreTracksLoadedAt). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    - Added event [`Animations.PreloadAsyncProgressed`](/api/AnimationsServer/#PreloadAsyncProgressed).
+    - Added init option [`Animations.DepsFolderPath`](/api/AnimationsServer/#DepsFolderPath). [Issue #46](https://github.com/wrello/Animations/issues/46)
+    - Added [`Animations:GetPlayingTracks()`](/api/AnimationsServer/#GetPlayingTracks). [Issue #42](https://github.com/wrello/Animations/issues/42)
+    - Added init option [`AnimationsClient.EnableAutoCustomRBXAnimationIds`](/api/AnimationsClient/#EnableAutoCustomRBXAnimationIds).
+    - Added init option [`AnimationsClient.AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer)/[`AnimationsServer.AutoRegisterPlayers`](/api/AnimationsServer/#AutoRegisterPlayers). [Issue #43](https://github.com/wrello/Animations/issues/43)
+    
+
+- Changes (non-breaking)
+    - Changed init option [`AnimationsServer.TimeToLoadPrints`](/api/AnimationsServer/#TimeToLoadPrints) to default to `true` because it's important to realize that initialization can yield for quite some time during `ContentProvider:PreloadAsync()` on all animations in the [`AnimationIds`](/api/AnimationIds) module. [Issue #44](https://github.com/wrello/Animations/issues/44)
+
+
+- Fixes
+    - Fixed `ContentProvider:PreloadAsync()` being called every time tracks got loaded for a rig. [Issue #44](https://github.com/wrello/Animations/issues/44)
+    - Fixed animations server editing players' animate scripts when it wasn't necessary. [Issue #45](https://github.com/wrello/Animations/issues/45)
+
+
+- Notes
+    - It was impossible to load tracks seperately with the `Animations:LoadTracks()` method. This is now possible and means that loading tracks could happen many times during one rig's lifetime forcing us to seperate registration into [`Animations:Register()`](/api/AnimationsServer/#Register) so that it only happens once before any track loading does.
+
+
 ## v2.0.0-alpha
 > ###### 6/23/2024
 

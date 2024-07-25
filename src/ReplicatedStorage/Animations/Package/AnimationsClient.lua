@@ -9,31 +9,37 @@ local RunService = game:GetService("RunService")
 local Types = require(script.Parent.Util.Types)
 local Signal = require(script.Parent.Util.Signal)
 local AnimationsClass = require(script.Parent.Util.AnimationsClass)
+local ChildFromPath = require(script.Parent.Util.ChildFromPath)
 
 local player = Players.LocalPlayer
+
+local AutoCustomRBXAnimationIds = nil
 
 --[=[
 	@interface initOptions
 	@within AnimationsClient
-	.AutoLoadPlayerTracks false
+	.AutoRegisterPlayer true
+	.AutoLoadAllPlayerTracks false
 	.TimeToLoadPrints true
+	.EnableAutoCustomRBXAnimationIds false
 	.AnimatedObjectsDebugMode false
 
-	Gets applied to [`Properties`](#properties).
+	Gets applied to [`Properties`](/api/AnimationsClient/#properties).
 ]=]
 type AnimationsClientInitOptionsType = Types.AnimationsClientInitOptionsType
 
 --[=[
 	@type path {any} | string
 	@within AnimationsClient
-	
+
 	```lua
+	-- In a LocalScript
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
-	
-	
+
+
 	-- These are all valid options for retrieving an animation track
 	local animationPath = "Jump" -- A single key (any type)
-	
+
 	local animationPath = {"Dodge", Vector3.xAxis} -- An array path (values of any type)
 
 	local animationPath = "Climb.Right" -- A path seperated by "." (string)
@@ -47,40 +53,79 @@ local Animations = AnimationsClass.new(script.Name)
 --[=[
 	@class AnimationsClient
 	@client
-	
+
 	:::note
 	Roblox model path: `Animations.Package.AnimationsClient`
 	:::
-	
+
 	:::info
-	Any reference to "client animation tracks" is referring to animation ids found under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module
+	Any reference to "client animation tracks" is referring to animation ids found under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
 	:::
 ]=]
 local AnimationsClient = Animations
 
 --[=[
-	@prop AutoLoadPlayerTracks false
+	@prop DepsFolderPath nil
 	@within AnimationsClient
 
-	If set to true, client animation tracks will be loaded each time the client spawns.
-	
+	Set the path to the dependencies folder if you have moved it from its original location inside of the root `Animations` folder.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+AnimationsClient.DepsFolderPath = nil
+
+--[=[
+	@prop AutoRegisterPlayer true
+	@within AnimationsClient
+
+	If set to true, the client will automatically be registered on spawn. See [`Animations:Register()`](/api/AnimationsClient/#Register) for more info.
+
 	:::warning
 	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
 	:::
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
 ]=]
-AnimationsClient.AutoLoadPlayerTracks = false
+AnimationsClient.AutoRegisterPlayer = true
+
+--[=[
+	@prop AutoLoadAllPlayerTracks false
+	@within AnimationsClient
+
+	If set to true, client animation tracks will be loaded each time the client spawns.
+
+	:::warning
+	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
+	:::
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`AutoLoadPlayerTracks`~~ -> `AutoLoadAllPlayerTracks`
+
+	Will automatically register client as well if [`AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer) is not already set to true.
+	:::
+]=]
+AnimationsClient.AutoLoadAllPlayerTracks = false
 
 --[=[
 	@prop TimeToLoadPrints true
 	@within AnimationsClient
 
-	If set to true, prints will be made on each call to [`AnimationsClient:LoadTracks()`](#LoadTracks) to indicate the start, stop and elapsed time of pre-loading the client animation tracks.
-
-	:::caution
-	It is suggested to keep this as true because a lot of client animation tracks results in a significant yield time which is difficult to debug if forgotten.
-	:::
+	If set to true, makes helpful prints about the time it takes to pre-load and load animations.
 ]=]
 AnimationsClient.TimeToLoadPrints = true
+
+--[=[
+	@prop EnableAutoCustomRBXAnimationIds false
+	@within AnimationsClient
+
+	If set to true, applies the [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) module table to the client on spawn.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+AnimationsClient.EnableAutoCustomRBXAnimationIds = false
 
 --[=[
 	@prop AnimatedObjectsDebugMode false
@@ -94,7 +139,11 @@ AnimationsClient.AnimatedObjectsDebugMode = false
 	@yields
 	@param initOptions initOptions?
 
-	Initializes `AnimationsClient`. Yields waiting for the server to initialize and if [`AnimationsClient.AutoLoadTracks`](#AutoLoadTracks) is set to true and the player's character already exists.
+	Initializes `AnimationsClient`.
+
+	Yields when...
+	- ...server has not initialized.
+	- ...animations are being pre-loaded with `ContentProvider:PreloadAsync()` (could take a while).
 
 	:::info
 	Should be called once before any other method.
@@ -106,52 +155,61 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 		return
 	end
 
-	local serverInitialized = script.Parent.AnimationsServer:GetAttribute("Initialized")
-	if not serverInitialized then
-		task.delay(3, function()
-			if not serverInitialized then
-				warn("Infinite yield possible waiting for AnimationsServer:Init()")
+	local function bootstrapDepsFolder()
+		local depsFolder
+
+		if self.DepsFolderPath then
+			local ok
+			ok, depsFolder = pcall(ChildFromPath, game, self.DepsFolderPath)
+			assert(ok and depsFolder, "No animation deps folder found at path '" .. self.DepsFolderPath .. "'")
+		else
+			depsFolder = script.Parent.Parent.Deps
+		end
+
+		AutoCustomRBXAnimationIds = require(depsFolder.AutoCustomRBXAnimationIds)
+
+		self:_bootstrapDepsFolder(depsFolder)
+	end
+
+	local function awaitServerInitialized()
+		local serverInitialized = script.Parent.AnimationsServer:GetAttribute("InitializedForClients")
+		if not serverInitialized then
+			task.delay(3, function()
+				if not serverInitialized then
+					warn("Infinite yield possible waiting for AnimationsServer:Init()")
+				end
+			end)
+
+			script.Parent.AnimationsServer:GetAttributeChangedSignal("InitializedForClients"):Wait()
+
+			serverInitialized = true
+		end
+	end
+
+	local function initInitOptions()
+		if initOptions then
+			for k, v in pairs(initOptions) do
+				self[k] = v
 			end
-		end)
-
-		script.Parent.AnimationsServer:GetAttributeChangedSignal("Initialized"):Wait()
-
-		serverInitialized = true
-	end
-
-	if initOptions then
-		if initOptions.AutoLoadPlayerTracks ~= nil then
-			self.AutoLoadPlayerTracks = initOptions.AutoLoadPlayerTracks
-		end
-
-		if initOptions.TimeToLoadPrints ~= nil then
-			self.TimeToLoadPrints = initOptions.TimeToLoadPrints
-		end
-
-		if initOptions.AnimatedObjectsDebugMode ~= nil then
-			self.AnimatedObjectsDebugMode = initOptions.AnimatedObjectsDebugMode
 		end
 	end
 
-	local function initRigMethods()
+	local function initMethods()
+		local manualRigMethodNames = {
+			["AreAllTracksLoaded"] = "AreAllRigTracksLoaded",
+			["LoadAllTracks"] = "LoadAllRigTracks",
+			["AwaitAllTracksLoaded"] = "AwaitAllRigTracksLoaded",
+		}
+
 		for k: string, v in pairs(AnimationsClass) do
 			if type(v) == "function" and not k:match("^_") then
 				local clientMethodName = k
-				local rigMethodName = clientMethodName:gsub("^(%L[^%L]+)(%L[^%L]+)", "%1Rig%2")
 
-				if clientMethodName == "LoadTracks" then
-					self[clientMethodName] = function(self)
-						return v(self, player, "Player")
-					end
+				if clientMethodName ~= "GetAnimationProfile"
+					and clientMethodName ~= "AwaitPreloadAsyncFinished"
+				then
+					local rigMethodName = manualRigMethodNames[clientMethodName] or clientMethodName:gsub("^(%L[^%L]+)(%L?[^%L]*)", "%1Rig%2")
 
-					self[rigMethodName] = function(self, rig, rigType)
-						return v(self, rig, rigType)
-					end
-				elseif clientMethodName == "GetAnimationProfile" then
-					self[clientMethodName] = function(self, animationProfileName)
-						return v(self, animationProfileName)
-					end
-				else
 					self[clientMethodName] = function(self, ...)
 						return v(self, player, ...)
 					end
@@ -163,55 +221,101 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 			end
 		end
 	end
-	
-	local function initAutoLoadPlayerTracks()
-		if self.AutoLoadPlayerTracks then
-			if player.Character then
-				self:LoadTracks()
+
+	local function initOnPlayerSpawn()
+		local function onCharacterAdded(char)
+			if self.AutoRegisterPlayer then
+				self:Register("Player")
+			end
+
+			if self.AutoLoadAllPlayerTracks then
+				self:Register("Player")
+				self:LoadAllTracks()
+			end
+
+			if self.EnableAutoCustomRBXAnimationIds then
+				self:ApplyCustomRBXAnimationIds(player, AutoCustomRBXAnimationIds)
 			end
 		end
 
-		-- TODO: Move this inside of the check above?
-		player.CharacterAdded:Connect(function(char)
-			if self.AutoLoadPlayerTracks then
-				self:LoadTracks()
-			end
-		end)
+		onCharacterAdded(player.Character or player.CharacterAdded:Wait())
+		player.CharacterAdded:Connect(onCharacterAdded)
 	end
-	
+
 	local function initCustomRBXAnimationIdsSignal()
-		local function applyCustomRBXAnimationIds()
+		local function applyCustomRBXAnimationIds(animator, animateScript, humRigTypeCustomRBXAnimationIds)
+			if humRigTypeCustomRBXAnimationIds then
+				self:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
+			end
+
 			RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait(), the running animation bugs if they are moving when this function is called.
-			
+
 			local char = player.Character
 			local hum = char:FindFirstChild("Humanoid")
-			
+
 			if hum then
 				hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
 			end
 		end
-		
+
 		self.ApplyCustomRBXAnimationIdsSignal = Signal.new()
-		
+
 		local signals = {self.ApplyCustomRBXAnimationIdsSignal, script.Parent:WaitForChild("ApplyCustomRBXAnimationIds").OnClientEvent}
-		
+
 		for _, signal in ipairs(signals) do
 			signal:Connect(applyCustomRBXAnimationIds)
 		end
 	end
-	
+
 	local function destroyAnimationsServer()
 		script.Parent.AnimationsServer:Destroy()
 	end
 
+	awaitServerInitialized()
+	initInitOptions()
+	bootstrapDepsFolder()
+	self:_animationIdsToInstances()
 	destroyAnimationsServer()
 	initCustomRBXAnimationIdsSignal()
-	initRigMethods()
-	
-	self._initialized = true -- Need to initialize before using self:LoadTracks() in the function below
-	
-	initAutoLoadPlayerTracks()
+	initMethods()
+	self._initialized = true -- Need to initialize before using methods in the function below
+	initOnPlayerSpawn()
 end
+
+--[=[
+	@method AwaitPreloadAsyncFinished
+	@yields
+	@within AnimationsClient
+	@return {Animation?}
+
+	Yields until `ContentProvider:PreloadAsync()` finishes pre-loading all animation instances.
+
+	```lua
+	-- In a LocalScript
+	local loadedAnimInstances = Animations:AwaitPreloadAsyncFinished()
+		
+	print("ContentProvider:PreloadAsync() finished pre-loading all:", loadedAnimInstances)
+	```
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@prop PreloadAsyncProgressed RBXScriptSignal
+	@within AnimationsClient
+
+	Fires when `ContentProvider:PreloadAsync()` finishes pre-loading one animation instance.
+
+	```lua
+	-- In a LocalScript
+	Animations.PreloadAsyncProgressed:Connect(function(n, total, loadedAnimInstance)
+		print("ContentProvider:PreloadAsync() finished pre-loading one:", n, total, loadedAnimInstance)
+	end)
+	```
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
 
 --[=[
 	@interface customRBXAnimationIds
@@ -224,9 +328,9 @@ end
 	.swim number?
 	.swimIdle number?
 	.climb number?
-	
+
 	A table of animation ids to replace the default roblox animation ids.
-	
+
 	:::info
 	Roblox applies the `"walk"` animation id for `R6` characters and the `"run"` animation id for `R15` characters (instead of both).
 	:::
@@ -237,8 +341,81 @@ end
 	@within AnimationsClient
 	.[Enum.HumanoidRigType.R6] customRBXAnimationIds?
 	.[Enum.HumanoidRigType.R15] customRBXAnimationIds?
-	
+
 	A table mapping a `Enum.HumanoidRigType` to its supported animation ids that will replace the default roblox animation ids.
+]=]
+
+--[=[
+	@method Register
+	@within AnimationsClient
+
+	Registers the client's character so that methods using animation tracks can be called.
+
+	:::tip
+	Automatically gives the `rig` (the client's character) an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
+	:::
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@method RegisterRig
+	@within AnimationsClient
+	@param rig Model
+	@param rigType string
+
+	Registers the `rig` so that rig methods using animation tracks can be called.
+
+	:::tip
+	Automatically gives the `rig` an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds/#rigType).
+	:::
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+
+--[=[
+	@method AwaitRegistered
+	@yields
+	@within AnimationsClient
+
+	Yields until the client gets registered.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@method AwaitRigRegistered
+	@yields
+	@within AnimationsClient
+	@param rig Model
+
+	Yields until the `rig` gets registered.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+
+--[=[
+	@method IsRegistered
+	@within AnimationsClient
+	@return boolean
+
+	Returns if the client is registered.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@method IsRigRegistered
+	@within AnimationsClient
+	@param rig Model
+	@return boolean
+
+	Returns if the `rig` is registered.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
 ]=]
 
 --[=[
@@ -246,14 +423,18 @@ end
 	@within AnimationsClient
 	@yields
 	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
-	
-	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
+
+	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the client's character.
+
+	Yields when...
+	- ...the client's character, humanoid, animator, or animate script aren't immediately available.
 
 	:::tip
 	See [`ApplyAnimationProfile()`](#ApplyAnimationProfile) for a more convenient way of overriding default roblox character animations.
 	:::
 
 	```lua
+	-- In a LocalScript
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
 
 	Animations:Init()
@@ -269,7 +450,7 @@ end
 			idle = {
 				Animation1 = 656117400,
 				Animation2 = 656118341
-			}	
+			}
 		}
 	})
 	```
@@ -280,8 +461,11 @@ end
 	@yields
 	@param rig Model
 	@param humanoidRigTypeToCustomRBXAnimationIds humanoidRigTypeToCustomRBXAnimationIds
-	
-	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the `rig`. Yields if the `rig`'s humanoid or animate script aren't immediately available.
+
+	Applies the animation ids specified in the [`humanoidRigTypeToCustomRBXAnimationIds`](#humanoidRigTypeToCustomRBXAnimationIds) table on the `rig`.
+
+	Yields when...
+	- ...the `rig`'s humanoid or animate script aren't immediately available.
 
 	:::warning
 	This function only works for R6/R15 NPCs that are local to the client or network-owned by the client and have a client-side `"Animate"` script in their model.
@@ -289,27 +473,6 @@ end
 	:::tip
 	See [`ApplyRigAnimationProfile()`](#ApplyRigAnimationProfile) for a more convenient way of overriding default roblox character animations.
 	:::
-
-	```lua
-	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
-
-	Animations:Init()
-
-	task.wait(5)
-
-	print("Applying r15 ninja jump & idle animations")
-
-	-- These animations will only work if your character is R15
-	Animations:ApplyCustomRBXAnimationIds({
-		[Enum.HumanoidRigType.R15] = {
-			jump = 656117878,
-			idle = {
-				Animation1 = 656117400,
-				Animation2 = 656118341
-			}	
-		}
-	})
-	```
 ]=]
 
 --[=[
@@ -317,8 +480,8 @@ end
 	@within AnimationsClient
 	@param animationProfileName string
 	@return animationProfile humanoidRigTypeToCustomRBXAnimationIds?
-	
-	Returns the [`humanoidRigTypeToCustomRBXAnimationIds`](api/AnimationsServer#humanoidRigTypeToCustomRBXAnimationIds) table found in the profile module script `Deps<animationProfileName>`, or not if it doesn't exist.
+
+	Returns the [`humanoidRigTypeToCustomRBXAnimationIds`](api/AnimationsServer#humanoidRigTypeToCustomRBXAnimationIds) table found in the profile module script `Deps.<animationProfileName>`, or not if it doesn't exist.
 ]=]
 
 --[=[
@@ -326,9 +489,12 @@ end
 	@within AnimationsClient
 	@yields
 	@param animationProfileName string
-	
-	Applies the animation ids found in the animation profile on the client's character. Yields if the client's character, humanoid, animator, or animate script aren't immediately available.
-	
+
+	Applies the animation ids found in the animation profile on the client's character.
+
+	Yields when...
+	- ...the client's character, humanoid, animator, or animate script aren't immediately available.
+
 	:::info
 	For more information on setting up animation profiles check out [animation profiles tutorial](/docs/animation-profiles).
 	:::
@@ -339,9 +505,12 @@ end
 	@yields
 	@param rig Model
 	@param animationProfileName string
-	
-	Applies the animation ids found in the animation profile on the `rig`. Yields if the `rig`'s humanoid or animate script aren't immediately available.
-	
+
+	Applies the animation ids found in the animation profile on the `rig`.
+
+	Yields when...
+	- ...the `rig`'s humanoid or animate script aren't immediately available.
+
 	:::warning
 	This function only works for R6/R15 NPCs that are local to the client or network-owned by the client and have a client-side `"Animate"` script in their model.
 	:::
@@ -351,59 +520,161 @@ end
 ]=]
 
 --[=[
-	@method AwaitLoaded
+	@method AwaitAllTracksLoaded
 	@yields
 	@within AnimationsClient
-	
-	Yields until the client animation tracks have loaded.
+
+	Yields until the client has been registered and then until all animation tracks have loaded.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`AwaitLoaded`~~ -> `AwaitAllTracksLoaded`
+	:::
+
+	```lua
+	-- In a LocalScript
+	-- [WARNING] For this to work you need animation ids under the rig type of "Player" in the 'AnimationIds' module
+	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
+
+	Animations:Init({
+		AutoRegisterPlayer = true, -- Defaults to true (on the client)
+		AutoLoadAllPlayerTracks = true -- Defaults to false
+	})
+
+	Animations:AwaitAllTracksLoaded()
+
+	print("Animation tracks finished loading on the client!")
+	```
 ]=]
 --[=[
-	@method AwaitRigLoaded
+	@method AwaitAllRigTracksLoaded
 	@yields
 	@within AnimationsClient
 	@param rig Model
-	
-	Yields until the `rig` animation tracks have loaded.
+
+	Yields until the `rig` has been registered and then until all animation tracks have loaded.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`AwaitRigTracksLoaded`~~ -> `AwaitAllRigTracksLoaded`
+	:::
 ]=]
 
 --[=[
-	@method AreTracksLoaded
-	@within AnimationsClient
-	@return boolean
-	
-	Returns if the client has had its animation tracks loaded.
-]=]
---[=[
-	@method AreRigTracksLoaded
-	@within AnimationsClient
-	@param rig Model
-	@return boolean
-	
-	Returns if the `rig` has had its animation tracks loaded.
-]=]
-
---[=[
-	@method LoadTracks
-	@within AnimationsClient
+	@method AwaitTracksLoadedAt
 	@yields
-	
-	Yields while client animation tracks load.
+	@within AnimationsClient
+	@param path path
 
-	:::tip
-	Automatically gives the `rig` (the player's character) an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
+	Yields until the client has been registered and then until all animation tracks have loaded at `path`.
+
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
-	@method LoadRigTracks
-	@within AnimationsClient
+	@method AwaitRigTracksLoadedAt
 	@yields
+	@within AnimationsClient
 	@param rig Model
-	@param rigType string
-	
-	Yields while the `rig` animation tracks load.
+	@param path path
 
-	:::tip
-	Automatically gives the `rig` an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType).
+	Yields until the `rig` has been registered and then until all animation tracks have loaded at `path`.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+
+--[=[
+	@method AreAllTracksLoaded
+	@within AnimationsClient
+	@return boolean
+
+	Returns if the client has had all its animation tracks loaded.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`AreTracksLoaded`~~ -> `AreAllTracksLoaded`
+	:::
+]=]
+--[=[
+	@method AreAllRigTracksLoaded
+	@within AnimationsClient
+	@param rig Model
+	@return boolean
+
+	Returns if the `rig` has had all its animation tracks loaded.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`AreRigTracksLoaded`~~ -> `AreAllRigTracksLoaded`
+	:::
+]=]
+
+--[=[
+	@method AreTracksLoadedAt
+	@within AnimationsClient
+	@param path path
+	@return boolean
+
+	Returns if the client has had its animation tracks loaded at `path`.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@method AreRigTracksLoadedAt
+	@within AnimationsClient
+	@param rig Model
+	@param path path
+	@return boolean
+
+	Returns if the `rig` has had its animation tracks loaded at `path`.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+
+--[=[
+	@method LoadAllTracks
+	@within AnimationsClient
+
+	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the client.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`LoadTracks`~~ -> `LoadAllTracks`
+
+	Now requires `Animations:Register()` before usage unless [`Animations.AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer) is enabled.
+	:::
+]=]
+--[=[
+	@method LoadAllRigTracks
+	@within AnimationsClient
+	@param rig Model
+
+	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the `rig`.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`LoadRigTracks`~~ -> `LoadAllRigTracks`
+
+	Now requires `Animations:RegisterRig()` before usage.
+	:::
+]=]
+
+--[=[
+	@method LoadTracksAt
+	@within AnimationsClient
+	@param path path
+
+	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the client at `path`.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@method LoadRigTracksAt
+	@within AnimationsClient
+	@param rig Model
+	@param path path
+
+	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the `rig` at `path`.
+
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -412,7 +683,7 @@ end
 	@within AnimationsClient
 	@param path path
 	@return AnimationTrack?
-	
+
 	Returns a client animation track or nil.
 ]=]
 --[=[
@@ -421,7 +692,7 @@ end
 	@param rig Model
 	@param path path
 	@return AnimationTrack?
-	
+
 	Returns a `rig` animation track or nil.
 ]=]
 
@@ -470,21 +741,50 @@ end
 ]=]
 
 --[=[
-	@method StopAllTracks
+	@method StopPlayingTracks
 	@within AnimationsClient
 	@param fadeTime number?
 	@return {AnimationTrack?}
 
 	Returns the stopped client animation tracks.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`StopAllTracks`~~ -> `StopPlayingTracks`
+	:::
 ]=]
 --[=[
-	@method StopRigAllTracks
+	@method StopRigPlayingTracks
 	@within AnimationsClient
 	@param rig Model
 	@param fadeTime number?
 	@return {AnimationTrack?}
 
 	Returns the stopped `rig` animation tracks.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`StopRigAllTracks`~~ -> `StopRigPlayingTracks`
+	:::
+]=]
+--[=[
+	@method GetPlayingTracks
+	@within AnimationsClient
+	@return {AnimationTrack?}
+
+	Returns the playing client animation tracks.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+]=]
+--[=[
+	@method GetRigPlayingTracks
+	@within AnimationsClient
+	@param rig Model
+	@return {AnimationTrack?}
+
+	Returns the playing `rig` animation tracks.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
 ]=]
 
 --[=[
@@ -619,7 +919,7 @@ end
 	local heavyAttackAlias = "HeavyAttack" -- We want this alias in order to call Animations:PlayTrackFromAlias(heavyAttackAlias) regardless what weapon is equipped
 
 	local currentEquippedWeapon
-	
+
 	local function updateHeavyAttackAliasPath()
 		local alias = heavyAttackAlias
 		local path = currentEquippedWeapon .. "Combat"
