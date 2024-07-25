@@ -408,6 +408,8 @@ function AnimationsClass:_removeTrackAlias(player_or_rig, alias)
 end
 
 function AnimationsClass:_attachDetachAnimatedObject(attach_detach, player_or_rig, animatedObjectPath, animatedObjectInfo)
+	CustomAssert(animatedObjectPath ~= nil, "Path is nil")
+	
 	local rig = getRig(player_or_rig)
 	self:_rigRegisteredAssertion(rig, "unable to", attach_detach, "animated object [", animatedObjectPath, "]")
 
