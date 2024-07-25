@@ -70,7 +70,7 @@ local AnimationsClient = Animations
 
 	Set the path to the dependencies folder if you have moved it from its original location inside of the root `Animations` folder.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 AnimationsClient.DepsFolderPath = nil
@@ -85,7 +85,7 @@ AnimationsClient.DepsFolderPath = nil
 	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
 	:::
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 AnimationsClient.AutoRegisterPlayer = true
@@ -100,7 +100,7 @@ AnimationsClient.AutoRegisterPlayer = true
 	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
 	:::
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AutoLoadPlayerTracks`~~ -> `AutoLoadAllPlayerTracks`
 
 	Will automatically register client as well if [`AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer) is not already set to true.
@@ -122,7 +122,7 @@ AnimationsClient.TimeToLoadPrints = true
 
 	If set to true, applies the [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) module table to the client on spawn.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 AnimationsClient.EnableAutoCustomRBXAnimationIds = false
@@ -320,7 +320,7 @@ end
 	Automatically gives the `rig` (the client's character) an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
 	:::
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
@@ -335,7 +335,7 @@ end
 	Automatically gives the `rig` an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds/#rigType).
 	:::
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -346,7 +346,7 @@ end
 
 	Yields until the client gets registered.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
@@ -357,7 +357,7 @@ end
 
 	Yields until the `rig` gets registered.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -368,7 +368,7 @@ end
 
 	Returns if the client is registered.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
@@ -379,7 +379,7 @@ end
 
 	Returns if the `rig` is registered.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -491,7 +491,7 @@ end
 
 	Yields until the client has been registered and then until all animation tracks have loaded.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AwaitLoaded`~~ -> `AwaitAllTracksLoaded`
 	:::
 
@@ -518,7 +518,7 @@ end
 
 	Yields until the `rig` has been registered and then until all animation tracks have loaded.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AwaitRigTracksLoaded`~~ -> `AwaitAllRigTracksLoaded`
 	:::
 ]=]
@@ -531,7 +531,7 @@ end
 
 	Yields until the client has been registered and then until all animation tracks have loaded at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
@@ -543,7 +543,7 @@ end
 
 	Yields until the `rig` has been registered and then until all animation tracks have loaded at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -554,7 +554,7 @@ end
 
 	Returns if the client has had all its animation tracks loaded.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AreTracksLoaded`~~ -> `AreAllTracksLoaded`
 	:::
 ]=]
@@ -566,7 +566,7 @@ end
 
 	Returns if the `rig` has had all its animation tracks loaded.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AreRigTracksLoaded`~~ -> `AreAllRigTracksLoaded`
 	:::
 ]=]
@@ -579,7 +579,7 @@ end
 
 	Returns if the client has had its animation tracks loaded at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
@@ -591,7 +591,7 @@ end
 
 	Returns if the `rig` has had its animation tracks loaded at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -601,7 +601,7 @@ end
 
 	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the client.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`LoadTracks`~~ -> `LoadAllTracks`
 
 	Now requires `Animations:Register()` before usage unless [`Animations.AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer) is enabled.
@@ -614,7 +614,7 @@ end
 
 	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the `rig`.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`LoadRigTracks`~~ -> `LoadAllRigTracks`
 
 	Now requires `Animations:RegisterRig()` before usage.
@@ -628,7 +628,7 @@ end
 
 	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the client at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
@@ -639,7 +639,7 @@ end
 
 	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the `rig` at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -713,7 +713,7 @@ end
 
 	Returns the stopped client animation tracks.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`StopAllTracks`~~ -> `StopPlayingTracks`
 	:::
 ]=]
@@ -726,7 +726,7 @@ end
 
 	Returns the stopped `rig` animation tracks.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`StopRigAllTracks`~~ -> `StopRigPlayingTracks`
 	:::
 ]=]
@@ -737,7 +737,7 @@ end
 
 	Returns the playing client animation tracks.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 --[=[
@@ -748,7 +748,7 @@ end
 
 	Returns the playing `rig` animation tracks.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 

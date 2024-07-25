@@ -63,7 +63,7 @@ local AnimationsServer = Animations
 
 	Set the path to the dependencies folder if you have moved it from its original location inside of the root `Animations` folder.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 AnimationsServer.DepsFolderPath = nil
@@ -78,7 +78,7 @@ AnimationsServer.DepsFolderPath = nil
 	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
 	:::
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 AnimationsServer.AutoRegisterPlayers = true
@@ -93,7 +93,7 @@ AnimationsServer.AutoRegisterPlayers = true
 	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
 	:::
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AutoLoadPlayerTracks`~~ -> `AutoLoadAllPlayerTracks`
 
 	Will automatically register players as well if [`AutoRegisterPlayers`](/api/AnimationsServer/#AutoRegisterPlayers) is not already set to true.
@@ -107,7 +107,7 @@ AnimationsServer.AutoLoadAllPlayerTracks = false
 
 	If set to true, makes helpful prints about the time it takes to pre-load and load animations.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Defaults to `true`.
 	:::
 ]=]
@@ -257,7 +257,7 @@ end
 	Automatically gives the character/rig an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType).
 	:::
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -269,7 +269,7 @@ end
 
 	Yields until the `player_or_rig` gets registered.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -281,7 +281,7 @@ end
 
 	Returns if the `player_or_rig` is registered.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -363,7 +363,7 @@ end
 
 	Yields until all the `player_or_rig`'s animation tracks have loaded.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AwaitLoaded`~~ -> `AwaitAllTracksLoaded`
 	:::
 
@@ -393,7 +393,7 @@ end
 
 	Yields until the `player_or_rig`'s animation tracks have loaded at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -405,7 +405,7 @@ end
 	
 	Returns if the `player_or_rig` has had all its animation tracks loaded.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AreTracksLoaded`~~ -> `AreAllTracksLoaded`
 	:::
 ]=]
@@ -418,7 +418,7 @@ end
 	
 	Returns if the `player_or_rig` has had its animation tracks loaded at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
@@ -429,7 +429,7 @@ end
 	
 	Creates animation tracks from all animation ids in [`AnimationIds`](/api/AnimationIds) for the `player_or_rig`.
 
-	:::caution *changed in version 2.0.0*
+	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`LoadTracks`~~ -> `LoadAllTracks`
 
 	Now requires `Animations:Register()` before usage unless `player_or_rig` is a player and [`Animations.AutoRegisterPlayers`](/api/AnimationsServer/#AutoRegisterPlayers) is enabled.
@@ -443,7 +443,7 @@ end
 	
 	Creates animation tracks from animation ids in [`AnimationIds`](/api/AnimationIds) for the `player_or_rig` at `path`.
 
-	:::tip *added in version 2.0.0*
+	:::tip *added in version 2.0.0-rc1*
 	:::
 ]=]
 
