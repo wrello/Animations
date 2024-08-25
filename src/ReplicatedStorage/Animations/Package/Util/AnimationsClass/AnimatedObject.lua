@@ -29,7 +29,7 @@ local function setupMotor6d(motor6d, rig, animatedObject)
 
 	-- Setting the motor6d's Part1 to the correct animated
 	-- object part so it will work with the animation
-	if animatedObject:IsA("BasePart") then 
+	if animatedObject:IsA("BasePart") then
 		motor6d.Part1 = animatedObject
 	else
 		local part1NameStrVal = motor6d:FindFirstChild("Part1Name")

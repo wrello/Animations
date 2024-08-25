@@ -1,5 +1,7 @@
 --!strict
 -- made by wrello
+-- v2.0.0
+-- GitHub: https://github.com/wrello/Animations
 
 assert(game:GetService("RunService"):IsServer(), "Attempt to require AnimationsServer on the client")
 
@@ -197,7 +199,10 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 				end
 			end
 
-			onCharacterAdded(player.Character or player.CharacterAdded:Wait())
+			if player.Character then
+				onCharacterAdded(player.Character)
+			end
+
 			player.CharacterAdded:Connect(onCharacterAdded)
 		end
 		
@@ -216,6 +221,18 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	self._initialized = true -- Need to initialize before using methods in the function below
 	initOnPlayerSpawn()
 end
+
+--[=[
+	@method GetAppliedProfileName
+	@within AnimationsServer
+	@param player_or_rig Player | Model
+	@return string?
+
+	Returns the `player_or_rig`'s currently applied animation profile name or nil.
+
+	:::tip *added in version 2.0.0*
+	:::
+]=]
 
 --[=[
 	@method AwaitPreloadAsyncFinished
@@ -524,6 +541,10 @@ end
 	@return {AnimationTrack?}
 
 	Returns the stopped `player_or_rig` animation tracks.
+
+	:::caution *changed in version 2.0.0-rc1*
+	Renamed: ~~`StopAllTracks`~~ -> `StopPlayingTracks`
+	:::
 ]=]
 
 --[=[

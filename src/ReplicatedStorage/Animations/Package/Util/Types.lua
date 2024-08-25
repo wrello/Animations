@@ -48,6 +48,7 @@ export type AnimationsServerType = {
 
 	ApplyCustomRBXAnimationIds: (self: AnimationsServerType, player_or_rig: Player | Model, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
 
+	GetAppliedProfileName: (self: AnimationsServerType, player_or_rig: Player | Model) -> string?,
 	GetAnimationProfile: (self: AnimationsServerType, animationProfileName: string) -> HumanoidRigTypeToCustomRBXAnimationIdsType?,
 	ApplyAnimationProfile: (self: AnimationsServerType, player_or_rig: Player | Model, animationProfileName: string) -> ()
 } & AnimationsServerInitOptionsType
@@ -129,6 +130,9 @@ export type AnimationsClientType = {
 
 	ApplyCustomRBXAnimationIds: (self: AnimationsClientType, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
 	ApplyRigCustomRBXAnimationIds: (self: AnimationsClientType, rig: Model, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
+
+	GetAppliedProfileName: (self: AnimationsClientType) -> string?,
+	GetRigAppliedProfileName: (self: AnimationsClientType, rig: Model) -> string?,
 
 	GetAnimationProfile: (self: AnimationsClientType, animationProfileName: string) -> HumanoidRigTypeToCustomRBXAnimationIdsType?,
 

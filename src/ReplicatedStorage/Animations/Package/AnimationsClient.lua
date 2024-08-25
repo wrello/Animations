@@ -1,5 +1,7 @@
 --!strict
 -- made by wrello
+-- v2.0.0
+-- GitHub: https://github.com/wrello/Animations
 
 assert(game:GetService("RunService"):IsClient(), "Attempt to require AnimationsClient on the server")
 
@@ -234,24 +236,33 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 			end
 
 			if self.EnableAutoCustomRBXAnimationIds then
-				self:ApplyCustomRBXAnimationIds(player, AutoCustomRBXAnimationIds)
+				self:ApplyCustomRBXAnimationIds(AutoCustomRBXAnimationIds)
 			end
 		end
 
-		onCharacterAdded(player.Character or player.CharacterAdded:Wait())
+		if player.Character then
+			onCharacterAdded(player.Character)
+		end
+
 		player.CharacterAdded:Connect(onCharacterAdded)
 	end
 
 	local function initCustomRBXAnimationIdsSignal()
-		local function applyCustomRBXAnimationIds(animator, animateScript, humRigTypeCustomRBXAnimationIds)
+		local function applyCustomRBXAnimationIds(humRigTypeCustomRBXAnimationIds)
+			local hum = nil
+
 			if humRigTypeCustomRBXAnimationIds then
+				local char = player.Character or player.CharacterAdded:Wait()
+				local animator = char:WaitForChild("Humanoid"):WaitForChild("Animator")
+				local animateScript = char:WaitForChild("Animate")
+
 				self:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
+
+				RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait() the running animation bugs if the rig is moving when this function is called
 			end
 
-			RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait(), the running animation bugs if they are moving when this function is called.
-
 			local char = player.Character
-			local hum = char:FindFirstChild("Humanoid")
+			hum = char:FindFirstChild("Humanoid")
 
 			if hum then
 				hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
@@ -281,6 +292,28 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 	self._initialized = true -- Need to initialize before using methods in the function below
 	initOnPlayerSpawn()
 end
+
+--[=[
+	@method GetAppliedProfileName
+	@within AnimationsClient
+	@return string?
+
+	Returns the client's currently applied animation profile name or nil.
+
+	:::tip *added in version 2.0.0*
+	:::
+]=]
+--[=[
+	@method GetRigAppliedProfileName
+	@within AnimationsClient
+	@param rig Model
+	@return string?
+
+	Returns the `rig`'s currently applied animation profile name or nil.
+
+	:::tip *added in version 2.0.0*
+	:::
+]=]
 
 --[=[
 	@method AwaitPreloadAsyncFinished

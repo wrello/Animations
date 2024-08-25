@@ -1,3 +1,34 @@
+## v2.0.0
+> ###### 8/24/2024
+
+----
+
+- Changes (breaking)
+    - Changed method of requiring [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject) function in [`AnimationIds`](/api/AnimationIds) module. After replacing the empty deps with your current ones, the directory structure should look like this:
+```
+Animations/ (new)
+  Deps/ (mix)
+    AnimationIds (new with copied table from old)
+    AnimationProfiles (old)
+    AnimatedObjects (old)
+    AutoCustomRBXAnimationIds (old)
+  Package/ (new)
+    ...
+```
+
+
+- Ehancements
+    - Added [`HasProperties()`](/api/AnimationIds/#HasProperties) function in [`AnimationIds`](/api/AnimationIds) module. [Issue #54](https://github.com/wrello/Animations/issues/54)
+    - Added [`Animations:GetAppliedProfileName()`](/api/AnimationsServer/#GetAppliedProfileName). [Issue #53](https://github.com/wrello/Animations/issues/53)
+
+
+- Fixes
+    - Fixed [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) not working. [Issue #55](https://github.com/wrello/Animations/issues/55)
+    - Fixed waiting for `player.CharacterAdded` event that might never happen if `Players.CharacterAutoLoads` is disabled. [Issue #52](https://github.com/wrello/Animations/issues/52)
+    - Fixed "Cannot load the AnimationClipProvider Service" error/bug. [Issue #51](https://github.com/wrello/Animations/issues/51)
+    - Fixed documentation issues. [Issue #49](https://github.com/wrello/Animations/issues/49), [Issue #50](https://github.com/wrello/Animations/issues/50)
+
+
 ## v2.0.0-rc1
 > ###### 7/25/2024
 
