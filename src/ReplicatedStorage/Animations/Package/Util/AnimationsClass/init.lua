@@ -66,11 +66,11 @@ end
 
 local function clearTracks(currentSet)
 	for _, track in pairs(currentSet) do
-		local type = type(track)
+		local type = typeof(track)
 
 		if type == "table" then
 			clearTracks(track)
-		elseif type == "userdata" then
+		elseif type == "Instance" then
 			track:Destroy()
 		end
 	end
@@ -142,12 +142,16 @@ AnimationsClass.__index = AnimationsClass
 -- INITIALIZATION --
 --------------------
 function AnimationsClass:_createAnimationInstance(animationName, animationId)
-	local animation = Instance.new("Animation")
-	animation.Name = animationName
-	animation.AnimationId = ANIM_ID_STR:format(animationId)
-	
-	table.insert(self._preloadAsyncArray, animation)
-	
+	local animation = self.AnimationInstancesCache[animationId]
+	if not animation then
+		animation = Instance.new("Animation")
+		animation.Name = tostring(animationName)
+		animation.AnimationId = ANIM_ID_STR:format(animationId)
+
+		self.AnimationInstancesCache[animationId] = animation
+		table.insert(self._preloadAsyncArray, animation)
+	end
+
 	return animation
 end
 
@@ -163,18 +167,12 @@ function AnimationsClass:_animationIdsToInstances()
 		print("Started ContentProvider:PreloadAsync() on animations...")
 	end
 
-	local hasAnimatedObjectUnpackQueue = Queue.new()
+	local unpackQueue = Queue.new()
 
-	local function hasAnimatedObjectUnpackAll()
-		for unpackFn in hasAnimatedObjectUnpackQueue:DequeueIter() do
+	local function unpackQueueDoAll()
+		for unpackFn in unpackQueue:DequeueIter() do
 			unpackFn()
 		end
-	end
-
-	local function replaceAnimationIdWithAnimationInstance(idTable, animationIndex, animationId)
-		self.AnimationInstancesCache[animationId] = self.AnimationInstancesCache[animationId] or self:_createAnimationInstance(tostring(animationIndex), animationId)
-
-		idTable[animationIndex] = self.AnimationInstancesCache[animationId]
 	end
 
 	local function mapAnimationInstanceToAnimatedObjectInfo(animationInstance, newAnimatedObjectInfo)
@@ -198,62 +196,76 @@ function AnimationsClass:_animationIdsToInstances()
 		end
 	end
 
-	local function mapAnimationInstancesToAnimatedObjectInfo(animationInstancesTable, animatedObjectInfo)
-		-- `idTable` becomes `animationInstancesTable` after
-		-- calling `replaceAnimationIdWithAnimationInstance`
-		-- on key-value pairs.
-		for _, animationInstance in pairs(animationInstancesTable) do
-			local type = type(animationInstance)
-
-			if type == "table" then
-				local nextIdTable = animationInstance
-
-				mapAnimationInstancesToAnimatedObjectInfo(nextIdTable, animatedObjectInfo)
-			elseif type == "userdata" then
-				mapAnimationInstanceToAnimatedObjectInfo(animationInstance, animatedObjectInfo)
-			end
-		end
-	end
-
-	local function initializeAnimationIds(idTable)
+	local function initializeAnimationIds(idTable, state)
 		for animationIndex, animationId in pairs(idTable) do
 			local type = type(animationId)
+			local newAnimationInstance = nil
 
 			if type == "table" then
-				local nextIdTable = animationId
-				local animatedObjectInfo = nextIdTable._animatedObjectInfo
+				if animationId._singleAnimationId then
+					newAnimationInstance = self:_createAnimationInstance(animationIndex, animationId._singleAnimationId)
 
-				if animatedObjectInfo then
-					nextIdTable._animatedObjectInfo = nil
-
-					if nextIdTable._singleAnimationId then -- If there is only 1 animation id in the table, just replace the table itself with an animation instance (also don't need to worry about setting to nil because the whole table gets overloaded with the `_singleAnimationId`)
-						replaceAnimationIdWithAnimationInstance(idTable, animationIndex, nextIdTable._singleAnimationId)
-						mapAnimationInstanceToAnimatedObjectInfo(idTable[animationIndex], animatedObjectInfo)
-					else
-						-- Moving all keys out of the table sent to `HasAnimatedObject`
-						-- function and up one level. Need a queue for this because we still
-						-- need it to happen from top down, but after all animations are loaded.
-						local doUnpack = animatedObjectInfo.AnimatedObjectSettings.DoUnpack
-
-						if doUnpack then
-							hasAnimatedObjectUnpackQueue:Enqueue(function()
-								idTable[animationIndex] = nil
-
-								for k, v in nextIdTable do
-									idTable[k] = v
-								end
-							end)
-						end
-
-						initializeAnimationIds(nextIdTable)
-						mapAnimationInstancesToAnimatedObjectInfo(nextIdTable, animatedObjectInfo)
+					if animationId._runtimeProps then
+						state.runtimeProps = animationId._runtimeProps
+					elseif animationId._animatedObjectInfo then
+						state.animatedObjectInfo = animationId._animatedObjectInfo
 					end
 				else
-					initializeAnimationIds(nextIdTable)
+					local nextIdTable = animationId -- We are inside of a normal id table
+
+					-- Moving all keys out of the table sent to `HasAnimatedObject` and `HasProperties`
+					-- functions and up one level. Need a queue for this because we still
+					-- need it to happen from top down, but after all animations are loaded.
+					local doUnpack = nextIdTable._doUnpack
+					nextIdTable._doUnpack = nil
+					if doUnpack then
+						unpackQueue:Enqueue(function()
+							idTable[animationIndex] = nil
+
+							for k, v in pairs(nextIdTable) do
+								idTable[k] = v
+							end
+						end)
+					end
+
+					-- First replace all descendant animation ids within `nextIdTable` with { _singleAnimation and _runtimeProps }
+					local runtimeProps = nextIdTable._runtimeProps
+					nextIdTable._runtimeProps = nil
+					if runtimeProps then
+						state.runtimeProps = runtimeProps
+					end
+
+					-- Then map all descendant animation instances (or ids -> instances) within `nextIdTable` to their animated object infos
+					local animatedObjectInfo = nextIdTable._animatedObjectInfo
+					nextIdTable._animatedObjectInfo = nil
+					if animatedObjectInfo then
+						state.animatedObjectInfo = animatedObjectInfo
+					end
+
+					-- CONTINUE RECURSION | AFTER CONFIGURING STATE FOR DESCENDANT ANIMATION IDS
+					initializeAnimationIds(nextIdTable, state)
+					continue
 				end
-			elseif type == "number" then -- The `animationId` was already turned into an animation instance (happens when multiple references to the same animation id table occur)
-				replaceAnimationIdWithAnimationInstance(idTable, animationIndex, animationId)
+			elseif type == "number" then
+				newAnimationInstance = self:_createAnimationInstance(animationIndex, animationId)
+			elseif type == "userdata" then -- It's an already created animation instance
+				continue
 			end
+
+			if state.animatedObjectInfo then
+				mapAnimationInstanceToAnimatedObjectInfo(newAnimationInstance, state.animatedObjectInfo)
+			end
+
+			if state.runtimeProps then
+				idTable[animationIndex] = {
+					_runtimeProps = state.runtimeProps,
+					_singleAnimation = newAnimationInstance
+				}
+			else
+				idTable[animationIndex] = newAnimationInstance
+			end
+
+			-- END RECURSION | AFTER CONFIGURING A SINGLE ANIMATION ID
 		end
 	end
 
@@ -273,10 +285,10 @@ function AnimationsClass:_animationIdsToInstances()
 	end
 
 	for _, idTable in pairs(AnimationIds) do
-		initializeAnimationIds(idTable)
+		initializeAnimationIds(idTable, {})
 	end
 
-	hasAnimatedObjectUnpackAll()
+	unpackQueueDoAll()
 	preloadAsync()
 
 	if self.TimeToLoadPrints then
@@ -294,7 +306,7 @@ function AnimationsClass.new(moduleName)
 	self._preloadAsyncArray = {}
 
 	self.PreloadAsyncProgressed = Signal.new()
-	
+
 	self.PreloadAsyncFinishedSignal = Signal.new()
 	self.FinishedLoadingSignal = Signal.new()
 	self.RegisteredRigSignal = Signal.new()
@@ -308,6 +320,7 @@ function AnimationsClass.new(moduleName)
 	}
 
 	self.PerRig = {
+		AppliedProfile = {},
 		TrackToAnimatedObjectInfo = {},
 		LoadedTracks = {},
 		Connections = {},
@@ -333,7 +346,7 @@ function AnimationsClass:_aliasesRegisterPlayer(player)
 	if self.Aliases[player] then
 		return
 	end
-	
+
 	self.Aliases[player] = {}
 
 	local connections = {}
@@ -373,7 +386,7 @@ end
 
 function AnimationsClass:_playStopTrack(play_stop, player_or_rig, path, isAlias, fadeTime, weight, speed)
 	CustomAssert(path ~= nil, "Path is nil")
-	
+
 	local track = self:_getTrack(player_or_rig, path, isAlias)
 	CustomAssert(track, "No track found at path [", path, "]", "for [", player_or_rig:GetFullName(), "]")
 
@@ -409,7 +422,7 @@ end
 
 function AnimationsClass:_attachDetachAnimatedObject(attach_detach, player_or_rig, animatedObjectPath, animatedObjectInfo)
 	CustomAssert(animatedObjectPath ~= nil, "Path is nil")
-	
+
 	local rig = getRig(player_or_rig)
 	self:_rigRegisteredAssertion(rig, "unable to", attach_detach, "animated object [", animatedObjectPath, "]")
 
@@ -461,10 +474,34 @@ function AnimationsClass:_attachDetachAnimatedObject(attach_detach, player_or_ri
 end
 
 function AnimationsClass:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
-	for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+	-- Server + NPC (no wait + no stop tracks):
+	-- Applies correctly on server
+
+	-- Server + NPC (no wait + yes stop tracks):
+	-- Applies correctly on client
+	
+	-- Server + NPC (yes wait + no stop tracks):
+	-- Applies correctly on server
+
+	-- Server + NPC (yes wait + yes stop tracks):
+	-- Applies correctly on client/server
+
+	-- Client + Client (no wait + no stop tracks):
+	-- Applies correctly on client
+	
+	-- Client + Client (no wait + yes stop tracks):
+	-- Applies correctly on server
+	
+	-- Client + Client (yes wait + no stop tracks):
+	-- Applies correctly on client
+
+	-- Client + Client (yes wait + yes stop tracks):
+	-- Applies correctly on client/server
+
+	for _, track: AnimationTrack in ipairs(animator:GetPlayingAnimationTracks()) do
 		track:Stop(0)
 	end
-
+	
 	for animName, animId in pairs(humRigTypeCustomRBXAnimationIds) do
 		local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
 
@@ -508,28 +545,31 @@ function AnimationsClass:_applyCustomRBXAnimationIds(player_or_rig, humanoidRigT
 
 			if RunService:IsClient() then
 				if clientSidedAnimateScript then
-					self.ApplyCustomRBXAnimationIdsSignal:Fire(animator, animateScript, humRigTypeCustomRBXAnimationIds)
+					self.ApplyCustomRBXAnimationIdsSignal:Fire(humRigTypeCustomRBXAnimationIds)
 				else
 					self.ApplyCustomRBXAnimationIdsSignal:Fire()
 				end
 			else
-				if not clientSidedAnimateScript then -- Forced to make changes on the server because the client can't make them
+				if not clientSidedAnimateScript then
+					-- Forced to make changes on the server because the client can't make them
 					self:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
 					self.ApplyCustomRBXAnimationIdsSignal:FireClient(player)
 				else
-					self.ApplyCustomRBXAnimationIdsSignal:FireClient(player, animator, animateScript, humRigTypeCustomRBXAnimationIds)
+					-- Tell the client to make the changes
+					self.ApplyCustomRBXAnimationIdsSignal:FireClient(player, humRigTypeCustomRBXAnimationIds)
 				end
 			end
 		else
-			self:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
-
 			-- WARNING: Undefined behavior if the NPC rig is
 			-- of auto/server network ownership and or has a
 			-- server "Animate" script and the client calls
 			-- `Animations:ApplyRigAnimationProfile()` or
 			-- `Animations:ApplyRigCustomRBXAnimationIds()`
 			-- on it.
-			RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait() the running animation bugs if the NPC is moving when this function is called.
+			self:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
+		
+			RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait() the running animation bugs if the rig is moving when this function is called
+
 			hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
 		end
 	end
@@ -567,8 +607,25 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 
 	local animator = getAnimator(rig, rig)
 
-	while not animator:IsDescendantOf(workspace) do
+	while not animator:IsDescendantOf(game) do
 		animator.AncestryChanged:Wait()
+	end
+
+	local function animator_LoadAnimation(animationInstance, animationName, parent_id_table, runtimeProps)
+		local track = animator:LoadAnimation(animationInstance)
+
+		parent_id_table[animationName] = track
+
+		local animatedObjectInfo = self.AnimationInstanceToAnimatedObjectInfo[animationInstance]
+		if animatedObjectInfo then
+			self.PerRig.TrackToAnimatedObjectInfo[rig][animationInstance.AnimationId] = animatedObjectInfo
+		end
+
+		if runtimeProps then
+			for k, v in pairs(runtimeProps) do
+				track[k] = v
+			end
+		end
 	end
 
 	if type(instance_or_id_table) == "userdata" then
@@ -579,15 +636,7 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 
 			return RAN_FULL_METHOD.No
 		else
-			local animationInstance = instance_or_id_table
-			local track = animator:LoadAnimation(animationInstance)
-
-			parent_id_table[animationName] = track
-
-			local animatedObjectInfo = self.AnimationInstanceToAnimatedObjectInfo[animationInstance]
-			if animatedObjectInfo then
-				self.PerRig.TrackToAnimatedObjectInfo[rig][animationInstance.AnimationId] = animatedObjectInfo
-			end
+			animator_LoadAnimation(instance_or_id_table, animationName, parent_id_table)
 
 			if self.TimeToLoadPrints then
 				print("Finished loading animation tracks for [", rig:GetFullName(), "] at path [", path or ALL_ANIMS_MARKER, "] in ", os.clock() - s, "seconds")
@@ -599,6 +648,13 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 		end
 
 		return RAN_FULL_METHOD.No
+	elseif instance_or_id_table._singleAnimation then
+		print(player_or_rig, path, instance_or_id_table, parent_id_table)
+		animator_LoadAnimation(instance_or_id_table._singleAnimation, animationName, parent_id_table, instance_or_id_table._runtimeProps)
+
+		if self.TimeToLoadPrints then
+			print("Finished loading animation tracks for [", rig:GetFullName(), "] at path [", path or ALL_ANIMS_MARKER, "] in ", os.clock() - s, "seconds")
+		end
 	else
 		local idTable = instance_or_id_table
 		local loadedATrack = false
@@ -614,19 +670,15 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 				local type = type(animationInstance)
 
 				if type == "table" then
-					loadTracks(animationInstance)
-				elseif type == "userdata" and animationInstance.ClassName == "Animation" then
-					if loadedATrack == false then
+					if animationInstance._singleAnimation then
 						loadedATrack = true
+						animator_LoadAnimation(animationInstance._singleAnimation, animationName, animationsTable, animationInstance._runtimeProps)
+					else
+						loadTracks(animationInstance)
 					end
-
-					local track = animator:LoadAnimation(animationInstance)
-					animationsTable[animationName] = track
-
-					local animatedObjectInfo = self.AnimationInstanceToAnimatedObjectInfo[animationInstance]
-					if animatedObjectInfo then
-						self.PerRig.TrackToAnimatedObjectInfo[rig][animationInstance.AnimationId] = animatedObjectInfo
-					end
+				elseif type == "userdata" and animationInstance.ClassName == "Animation" then
+					loadedATrack = true
+					animator_LoadAnimation(animationInstance, animationName, animationsTable)
 				end
 			end
 		end
@@ -659,7 +711,7 @@ function AnimationsClass:_awaitTracksLoadedAt(player_or_rig, path)
 	if path ~= ALL_ANIMS_MARKER then
 		local ok
 		ok, instance_or_id_table = pcall(ChildFromPath, parent, path)
-		CustomAssert(ok, "No track or id table found at path [", path, "in", parent, "]")
+		CustomAssert(ok and instance_or_id_table, "No track or id table found at path [", path, "in", parent, "]")
 	end
 
 	if type(instance_or_id_table) == "userdata" then
@@ -876,6 +928,7 @@ function AnimationsClass:Register(player_or_rig: Player | Model, rigType: string
 			self.PerRig.IsRegistered[rig] = nil
 			self.PerRig.Connections[rig] = nil
 			self.PerRig.LoadedTracks[rig] = nil
+			self.PerRig.AppliedProfile[rig] = nil
 			self.PerRig.AnimatedObjectsCache[rig] = nil
 			self.PerRig.TrackToAnimatedObjectInfo[rig] = nil
 		end
@@ -1029,13 +1082,22 @@ function AnimationsClass:GetAnimationProfile(animationProfileName: string): Type
 	return animationProfile
 end
 
+function AnimationsClass:GetAppliedProfileName(player_or_rig: Player | Model): string?
+	self:_initializedAssertion()
+
+	return self.PerRig.AppliedProfile[getRig(player_or_rig)]
+end
+
 function AnimationsClass:ApplyAnimationProfile(player_or_rig: Player | Model, animationProfileName: string)
 	self:_initializedAssertion()
 
 	local animationProfile = animationProfiles[animationProfileName]
 	CustomAssert(animationProfile, "No animation profile found at name [", animationProfileName, "]")
 
-	self:_applyCustomRBXAnimationIds(player_or_rig, animationProfile)
+	local rig = getRig(player_or_rig)
+	self.PerRig.AppliedProfile[rig] = animationProfileName
+
+	self:_applyCustomRBXAnimationIds(rig, animationProfile)
 end
 
 return AnimationsClass

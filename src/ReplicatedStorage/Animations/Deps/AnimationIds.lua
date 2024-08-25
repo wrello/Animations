@@ -1,5 +1,8 @@
 local Types = require(script.Parent.Parent.Package.Util.Types)
-local HasAnimatedObject = require(script.Parent.Parent.Package.Util.HasAnimatedObject)
+local AnimationIdsUtil = require(script.Parent.Parent.Package.Util.AnimationIdsUtil)
+
+local HasAnimatedObject = AnimationIdsUtil.HasAnimatedObject
+local HasProperties = AnimationIdsUtil.HasProperties
 
 --[=[
 	@type rigType string
@@ -37,6 +40,46 @@ local HasAnimatedObject = require(script.Parent.Parent.Package.Util.HasAnimatedO
 	@interface idTable
 	@within AnimationIds
 	.[any] idTable | animationId
+]=]
+
+--[=[
+	@type HasProperties (animationId: idTable, propertiesSettings: {Priority: Enum.AnimationPriority?, Looped: boolean?, DoUnpack: boolean?}): {}
+	@within AnimationIds
+
+	:::tip *added in version 2.0.0*
+	:::
+
+	```lua
+	local AnimationIds = {
+		Player = { -- `rigType` of "Player"
+			Dodge = {
+				[Enum.KeyCode.W] = 0000000,
+				[Enum.KeyCode.S] = 0000000,
+				[Enum.KeyCode.A] = 0000000,
+				[Enum.KeyCode.D] = 0000000,
+			},
+			Run = 0000000,
+			Walk = 0000000,
+			Idle = 0000000,
+			Sword = {
+				-- Now when the "Sword.Walk" animation plays it will
+				-- automatically have `Enum.AnimationPriority.Action` priority
+				Walk = HasProperties(0000000, { Priority = Enum.AnimationPriority.Action })
+
+				Idle = 0000000,
+				Run = 0000000,
+
+				-- Now when {"Sword", "AttackCombo", 1 or 2 or 3} animation
+				-- plays it will automatically have `Enum.AnimationPriority.Action` priority
+				AttackCombo = HasProperties({
+					[1] = 0000000,
+					[2] = 0000000,
+					[3] = 0000000
+				}, { Priority = Enum.AnimationPriority.Action })
+			}
+		},
+	}
+	```
 ]=]
 
 --[=[

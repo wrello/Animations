@@ -2,7 +2,6 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 
 --[=[
 	@tag Read Only
-	@server
 	@class AutoCustomRBXAnimationIds
 
 	:::note

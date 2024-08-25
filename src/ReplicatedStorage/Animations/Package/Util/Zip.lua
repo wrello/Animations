@@ -1,5 +1,5 @@
 -- made by wrello
--- v1.1.0
+-- v1.2.0
 
 local Zip = {}
 
@@ -7,7 +7,7 @@ function Zip.children(container, initFunction)
 	local zipped = {}
 
 	for _, moduleScript in ipairs(container:GetChildren()) do
-		if moduleScript:IsA("ModuleScript") then
+		if moduleScript.ClassName == "ModuleScript" then
 			local required = require(moduleScript)
 
 			if initFunction then
@@ -25,7 +25,7 @@ function Zip.descendants(container, initFunction)
 	local zipped = {}
 
 	for _, moduleScript in ipairs(container:GetDescendants()) do
-		if moduleScript:IsA("ModuleScript") then
+		if moduleScript.ClassName == "ModuleScript" then
 			local required = require(moduleScript)
 
 			if initFunction then
