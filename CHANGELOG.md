@@ -1,3 +1,23 @@
+## v2.1.0
+> ###### 12/27/2024
+
+----
+
+- Enhancements
+    - Set animation track names to be the same as their source animation instance names for convenience.
+    - Added [`Animations:WaitForRigPlayingTrack()`](/api/AnimationsServer/#WaitForRigPlayingTrack)/[`Animations:FindFirstRigPlayingTrack()`](/api/AnimationsServer/#FindFirstRigPlayingTrack). [Issue #62](https://github.com/wrello/Animations/issues/62)
+    - Added [`Animations:GetTimeOfMarker()`](/api/AnimationsServer/#GetTimeOfMarker). [Issue #64](https://github.com/wrello/Animations/issues/64)
+    - Added [`Animations:GetAnimationIdString()`](/api/AnimationsServer/#GetAnimationIdString).
+
+
+- Changes (non-breaking)
+    - Removed `Animations.AutoRegisterPlayers` on client and server. Automatic registration will always happen through `player.CharacterAdded` events. This decision was made for convenience and to eliminate the redudancy with `Animations.AutoLoadAllPlayerTracks` which *also* automatically registers the players when their character gets added.
+
+
+- Fixes
+    - Utility module `ChildFromPath` bug. [Issue #59](https://github.com/wrello/Animations/issues/59)
+    - Documentation fixes. [Issue #58](https://github.com/wrello/Animations/issues/58)
+
 ## v2.0.0
 > ###### 8/24/2024
 

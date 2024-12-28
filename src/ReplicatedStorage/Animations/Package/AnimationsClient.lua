@@ -20,11 +20,11 @@ local AutoCustomRBXAnimationIds = nil
 --[=[
 	@interface initOptions
 	@within AnimationsClient
-	.AutoRegisterPlayer true
 	.AutoLoadAllPlayerTracks false
 	.TimeToLoadPrints true
 	.EnableAutoCustomRBXAnimationIds false
 	.AnimatedObjectsDebugMode false
+	.DepsFolderPath string? -- Only use if you've moved the 'Deps' folder from its original location.
 
 	Gets applied to [`Properties`](/api/AnimationsClient/#properties).
 ]=]
@@ -78,21 +78,6 @@ local AnimationsClient = Animations
 AnimationsClient.DepsFolderPath = nil
 
 --[=[
-	@prop AutoRegisterPlayer true
-	@within AnimationsClient
-
-	If set to true, the client will automatically be registered on spawn. See [`Animations:Register()`](/api/AnimationsClient/#Register) for more info.
-
-	:::warning
-	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
-	:::
-
-	:::tip *added in version 2.0.0-rc1*
-	:::
-]=]
-AnimationsClient.AutoRegisterPlayer = true
-
---[=[
 	@prop AutoLoadAllPlayerTracks false
 	@within AnimationsClient
 
@@ -104,8 +89,6 @@ AnimationsClient.AutoRegisterPlayer = true
 
 	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AutoLoadPlayerTracks`~~ -> `AutoLoadAllPlayerTracks`
-
-	Will automatically register client as well if [`AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer) is not already set to true.
 	:::
 ]=]
 AnimationsClient.AutoLoadAllPlayerTracks = false
@@ -203,22 +186,19 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 			["AwaitAllTracksLoaded"] = "AwaitAllRigTracksLoaded",
 		}
 
+		local noAlternative = {"GetAnimationProfile", "AwaitPreloadAsyncFinished", "FindFirstRigPlayingTrack", "WaitForRigPlayingTrack", "GetTimeOfMarker", "GetAnimationIdString"}
+
 		for k: string, v in pairs(AnimationsClass) do
-			if type(v) == "function" and not k:match("^_") then
+			if type(v) == "function" and not k:match("^_") and not table.find(noAlternative, k) then
 				local clientMethodName = k
+				local rigMethodName = manualRigMethodNames[clientMethodName] or clientMethodName:gsub("^(%L[^%L]+)(%L?[^%L]*)", "%1Rig%2")
 
-				if clientMethodName ~= "GetAnimationProfile"
-					and clientMethodName ~= "AwaitPreloadAsyncFinished"
-				then
-					local rigMethodName = manualRigMethodNames[clientMethodName] or clientMethodName:gsub("^(%L[^%L]+)(%L?[^%L]*)", "%1Rig%2")
+				self[clientMethodName] = function(self, ...)
+					return v(self, player, ...)
+				end
 
-					self[clientMethodName] = function(self, ...)
-						return v(self, player, ...)
-					end
-
-					self[rigMethodName] = function(self, rig, ...)
-						return v(self, rig, ...)
-					end
+				self[rigMethodName] = function(self, rig, ...)
+					return v(self, rig, ...)
 				end
 			end
 		end
@@ -226,12 +206,9 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 
 	local function initOnPlayerSpawn()
 		local function onCharacterAdded(char)
-			if self.AutoRegisterPlayer then
-				self:Register("Player")
-			end
+			self:Register("Player")
 
 			if self.AutoLoadAllPlayerTracks then
-				self:Register("Player")
 				self:LoadAllTracks()
 			end
 
@@ -292,6 +269,118 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 	self._initialized = true -- Need to initialize before using methods in the function below
 	initOnPlayerSpawn()
 end
+
+--[=[
+	@yields
+	@tag Beta
+	@method GetTimeOfMarker
+	@within AnimationsClient
+	@param animTrack_or_IdString AnimationTrack | string
+	@param markerName string
+	@return number?
+
+	The only reason this would yield is if the
+	initialization process that caches all of the marker
+	times is still going on when this method gets called. If
+	after 3 seconds the initialization process still has not
+	finished, this method will return `nil`.
+	
+	```lua
+	local attackAnim = Animations:PlayTrack("Attack")
+	local timeOfHitStart = Animations:GetTimeOfMarker(attackAnim, "HitStart")
+
+	print("Time of hit start:", timeOfHitStart)
+
+	-- or
+
+	local animIdStr = Animations:GetAnimationIdString("Player", "Attack")
+	local timeOfHitStart = Animations:GetTimeOfMarker(animIdStr, "HitStart")
+
+	print("Time of hit start:", timeOfHitStart)
+	```
+
+	:::info
+	You must first modify your
+	[`AnimationIds`](/api/AnimationIds) module to specify
+	which animations this method will work on.
+	:::
+	:::caution
+	This method is in beta testing. Use with caution.
+	:::
+	:::tip *added in version 2.1.0*
+	:::
+]=]
+--[=[
+	@method GetAnimationIdString
+	@within AnimationsClient
+	@param rigType rigType
+	@param path path
+	@return string
+
+	Returns the animation id string under `rigType` at `path` in the [`AnimationIds`](/api/AnimationIds) module.
+
+	```lua
+	local animIdStr = Animations:GetAnimationIdString("Player", "Run")
+	print(animIdStr) --> "rbxassetid://89327320"
+	```
+
+	:::tip *added in version 2.1.0*
+	:::
+]=]
+
+--[=[
+	@method FindFirstRigPlayingTrack 
+	@within AnimationsClient 
+	@param rig Model
+	@param path path
+	@return AnimationTrack?
+
+	Returns a playing animation track found in
+	`rig.Humanoid.Animator:GetPlayingAnimationTracks()`
+	matching the animation id found at `path` in the
+	[`AnimationIds`](/api/AnimationIds) module or `nil`.
+
+	```lua
+	-- [WARNING] For this to work, `enemyCharacter` would have to be registered (most likely on the server) and "Blocking" would need to be a valid animation name defined in the `AnimationIds` module.
+	local isBlocking = Animations:FindFirstRigPlayingTrack(enemyCharacter, "Blocking")
+
+	if isBlocking then
+		warn("We can't hit the enemy, they're blocking!")
+	end
+	```
+
+	:::tip *added in version 2.1.0*
+	:::
+]=]
+--[=[
+	@yields
+	@method WaitForRigPlayingTrack
+	@within AnimationsClient
+	@param rig Model
+	@param path path
+	@param timeout number?
+	@return AnimationTrack?
+
+	Yields until a playing animation track is found in
+	`rig.Humanoid.Animator:GetPlayingAnimationTracks()`
+	matching the animation id found at `path` in the
+	[`AnimationIds`](/api/AnimationIds) module then returns it or returns `nil` after
+	`timeout` seconds if provided.
+
+	Especially useful if the animation needs time to replicate from server to client and you want to specify a maximum time to wait until it replicates.
+
+	```lua
+	-- [WARNING] For this to work, `enemyCharacter` would have to be registered (on the server) and "Blocking" would need to be a valid animation name defined in the `AnimationIds` module.
+	local isBlocking = Animations:WaitForRigPlayingTrack(enemyCharacter, "Blocking", 1)
+
+	if isBlocking then
+		warn("We can't hit the enemy, they're blocking!")
+	end
+	```
+
+	:::tip *added in version 2.1.0*
+	:::
+]=]
 
 --[=[
 	@method GetAppliedProfileName
@@ -383,6 +472,10 @@ end
 	@within AnimationsClient
 
 	Registers the client's character so that methods using animation tracks can be called.
+
+	:::note
+	The client's character gets automatically registered through the `client.CharacterAdded` event.
+	:::
 
 	:::tip
 	Automatically gives the `rig` (the client's character) an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType) (which is "Player" in this case).
@@ -569,7 +662,6 @@ end
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsClient)
 
 	Animations:Init({
-		AutoRegisterPlayer = true, -- Defaults to true (on the client)
 		AutoLoadAllPlayerTracks = true -- Defaults to false
 	})
 
@@ -671,8 +763,6 @@ end
 
 	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`LoadTracks`~~ -> `LoadAllTracks`
-
-	Now requires `Animations:Register()` before usage unless [`Animations.AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer) is enabled.
 	:::
 ]=]
 --[=[
@@ -685,7 +775,7 @@ end
 	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`LoadRigTracks`~~ -> `LoadAllRigTracks`
 
-	Now requires `Animations:RegisterRig()` before usage.
+	Requires `Animations:RegisterRig()` before usage.
 	:::
 ]=]
 

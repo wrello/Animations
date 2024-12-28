@@ -5,6 +5,7 @@ function AnimationIdsUtil.HasProperties(
 	propertiesSettings: {
         Priority: Enum.AnimationPriority?,
         Looped: boolean?,
+        MarkerTimes: boolean?, -- Set this to true for animations that should have accessible animation marker times
 		DoUnpack: boolean?, -- Sets the key value pairs for everything up one level instead of in the passed animation ids able
 	}
 ): {}

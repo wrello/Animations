@@ -43,7 +43,7 @@ local HasProperties = AnimationIdsUtil.HasProperties
 ]=]
 
 --[=[
-	@type HasProperties (animationId: idTable, propertiesSettings: {Priority: Enum.AnimationPriority?, Looped: boolean?, DoUnpack: boolean?}): {}
+	@type HasProperties (animationId: idTable, propertiesSettings: {Priority: Enum.AnimationPriority?, Looped: boolean?, DoUnpack: boolean?, MarkerTimes: boolean?}): {}
 	@within AnimationIds
 
 	:::tip *added in version 2.0.0*
@@ -69,13 +69,14 @@ local HasProperties = AnimationIdsUtil.HasProperties
 				Idle = 0000000,
 				Run = 0000000,
 
-				-- Now when {"Sword", "AttackCombo", 1 or 2 or 3} animation
-				-- plays it will automatically have `Enum.AnimationPriority.Action` priority
+	            -- Now when {"Sword", "AttackCombo", 1 or 2 or 3} animation
+	            -- plays it will automatically have `Enum.AnimationPriority.Action` priority and
+				-- will support `Animations:GetTimeOfMarker()`
 				AttackCombo = HasProperties({
 					[1] = 0000000,
 					[2] = 0000000,
 					[3] = 0000000
-				}, { Priority = Enum.AnimationPriority.Action })
+				}, { Priority = Enum.AnimationPriority.Action, MarkerTimes = true })
 			}
 		},
 	}

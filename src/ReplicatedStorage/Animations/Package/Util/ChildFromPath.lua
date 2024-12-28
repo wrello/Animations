@@ -1,12 +1,13 @@
 -- made by wrello
--- v2.0.0
+-- v2.0.1
 
 local function ChildFromPath(parent, path)
 	local child = parent
 
 	if type(path) == "string" then
 		local function forEachMatch(m)
-			child = child[m] or child[tonumber(m)]
+			local v = child[m]
+			child = if v ~= nil then v else child[tonumber(m)]
 		end
 
 		string.gsub(path, "[^.]+", forEachMatch)

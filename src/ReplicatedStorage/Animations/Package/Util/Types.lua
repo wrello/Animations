@@ -32,6 +32,12 @@ export type AnimationsServerType = {
 	PlayTrack: (self: AnimationsServerType, player_or_rig: Player | Model, path: {any} | string, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
 	StopTrack: (self: AnimationsServerType, player_or_rig: Player | Model, path: {any} | string, fadeTime: number?) -> AnimationTrack,
 
+	FindFirstRigPlayingTrack: (self: AnimationsServerType, rig: Model, path: {any} | string) -> AnimationTrack?,
+	WaitForRigPlayingTrack: (self: AnimationsServerType, rig: Model, path: {any} | string, timeout: number?) -> AnimationTrack?,
+
+	GetTimeOfMarker: (self: AnimationsServerType, animTrack_or_IdString: AnimationTrack | string, markerName: string) -> number?,
+	GetAnimationIdString: (self: AnimationsServerType, rigType: string, path: {any} | string) -> string,
+
 	StopPlayingTracks: (self: AnimationsServerType, player_or_rig: Player | Model, fadeTime: number?) -> {AnimationTrack?},
 	GetPlayingTracks: (self: AnimationsServerType, player_or_rig: Player | Model) -> {AnimationTrack?},
 	StopTracksOfPriority: (self: AnimationsServerType, player_or_rig: Player | Model, animationPriority: Enum.AnimationPriority, fadeTime: number?) -> {AnimationTrack?},
@@ -58,9 +64,6 @@ export type AnimationsClientType = {
 	Init: (self: AnimationsClientType, initOptions: AnimationsClientInitOptionsType?) -> (),
 
 	AwaitPreloadAsyncFinished: (self: AnimationsClientType) -> {Animation?} | RanFullMethodType,
-
-	AwaitAllTracksLoaded: (self: AnimationsClientType) -> (),
-	AwaitAllRigTracksLoaded: (self: AnimationsClientType, rig: Model) -> (),
 
 	AreTracksLoadedAt: (self: AnimationsClientType, path: {any} | string) -> boolean,
 	AreRigTracksLoadedAt: (self: AnimationsClientType, rig: Model, path: {any} | string) -> boolean,
@@ -101,6 +104,9 @@ export type AnimationsClientType = {
 	StopPlayingTracks: (self: AnimationsClientType, fadeTime: number?) -> {AnimationTrack?},
 	StopRigPlayingTracks: (self: AnimationsClientType, rig: Model, fadeTime: number?) -> {AnimationTrack?},
 
+	FindFirstRigPlayingTrack: (self: AnimationsClientType, rig: Model, path: {any} | string) -> AnimationTrack?,
+	WaitForRigPlayingTrack: (self: AnimationsClientType, rig: Model, path: {any} | string, timeout: number?) -> AnimationTrack?,
+
 	GetPlayingTracks: (self: AnimationsClientType) -> {AnimationTrack?},
 	GetRigPlayingTracks: (self: AnimationsClientType, rig: Model) -> {AnimationTrack?},
 
@@ -112,6 +118,9 @@ export type AnimationsClientType = {
 
 	PlayTrackFromAlias: (self: AnimationsClientType, alias: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
 	PlayRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any,  fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
+
+	GetTimeOfMarker: (self: AnimationsClientType, animTrack_or_IdString: AnimationTrack | string, markerName: string) -> number?,
+	GetAnimationIdString: (self: AnimationsClientType, rigType: string, path: {any} | string) -> string,
 
 	StopTrackFromAlias: (self: AnimationsClientType, alias: any, fadeTime: number?) -> AnimationTrack,
 	StopRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any, fadeTime: number?) -> AnimationTrack,
@@ -173,10 +182,10 @@ type AnimationsSharedInitOptionsType = {
 	EnableAutoCustomRBXAnimationIds: boolean?
 }
 export type AnimationsClientInitOptionsType = {
-	AutoRegisterPlayer: boolean?,
+
 } & AnimationsSharedInitOptionsType
 export type AnimationsServerInitOptionsType = {
-	AutoRegisterPlayers: boolean?,
+
 } & AnimationsSharedInitOptionsType
 
 return {}

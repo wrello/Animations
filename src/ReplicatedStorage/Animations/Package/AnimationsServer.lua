@@ -17,10 +17,10 @@ local AutoCustomRBXAnimationIds = nil
 	@interface initOptions
 	@within AnimationsServer
 	.AutoLoadAllPlayerTracks false
-	.AutoRegisterPlayers true
 	.TimeToLoadPrints false
 	.EnableAutoCustomRBXAnimationIds false
 	.AnimatedObjectsDebugMode false
+	.DepsFolderPath string? -- Only use if you've moved the 'Deps' folder from its original location.
 
 	Gets applied to [`Properties`](#properties).
 ]=]
@@ -71,21 +71,6 @@ local AnimationsServer = Animations
 AnimationsServer.DepsFolderPath = nil
 
 --[=[
-	@prop AutoRegisterPlayers true
-	@within AnimationsServer
-
-	If set to true, player characters will automatically be registered on spawn. See [`Animations:Register()`](/api/AnimationsServer/#Register) for more info.
-	
-	:::warning
-	Must have animation ids under [`rigType`](/api/AnimationIds#rigType) of **"Player"** in the [`AnimationIds`](/api/AnimationIds) module.
-	:::
-
-	:::tip *added in version 2.0.0-rc1*
-	:::
-]=]
-AnimationsServer.AutoRegisterPlayers = true
-
---[=[
 	@prop AutoLoadAllPlayerTracks false
 	@within AnimationsServer
 
@@ -97,8 +82,6 @@ AnimationsServer.AutoRegisterPlayers = true
 
 	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`AutoLoadPlayerTracks`~~ -> `AutoLoadAllPlayerTracks`
-
-	Will automatically register players as well if [`AutoRegisterPlayers`](/api/AnimationsServer/#AutoRegisterPlayers) is not already set to true.
 	:::
 ]=]
 AnimationsServer.AutoLoadAllPlayerTracks = false
@@ -185,12 +168,9 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	local function initOnPlayerSpawn()
 		local function onPlayerAdded(player)
 			local function onCharacterAdded(char)
-				if self.AutoRegisterPlayers then
-					self:Register(player, "Player")
-				end
+				self:Register(player, "Player")
 
 				if self.AutoLoadAllPlayerTracks then
-					self:Register(player, "Player")
 					self:LoadAllTracks(player)
 				end
 
@@ -221,6 +201,111 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	self._initialized = true -- Need to initialize before using methods in the function below
 	initOnPlayerSpawn()
 end
+
+--[=[
+	@yields
+	@tag Beta
+	@method GetTimeOfMarker
+	@within AnimationsServer
+	@param animTrack_or_IdString AnimationTrack | string
+	@param markerName string
+	@return number?
+
+	The only reason this would yield is if the
+	initialization process that caches all of the marker
+	times is still going on when this method gets called. If
+	after 3 seconds the initialization process still has not
+	finished, this method will return `nil`.
+
+	```lua
+	local attackAnim = Animations:PlayTrack("Attack")
+	local timeOfHitStart = Animations:GetTimeOfMarker(attackAnim, "HitStart")
+
+	print("Time of hit start:", timeOfHitStart)
+
+	-- or
+
+	local animIdStr = Animations:GetAnimationIdString("Player", "Attack")
+	local timeOfHitStart = Animations:GetTimeOfMarker(animIdStr, "HitStart")
+
+	print("Time of hit start:", timeOfHitStart)
+	```
+
+	:::info
+	You must first modify your
+	[`AnimationIds`](/api/AnimationIds) module to specify
+	which animations this method will work on.
+	:::
+	:::caution
+	This method is in beta testing. Use with caution.
+	:::
+	:::tip *added in version 2.1.0*
+	:::
+]=]
+--[=[
+	@method GetAnimationIdString
+	@within AnimationsServer
+	@param rigType rigType
+	@param path path
+	@return string
+
+	Returns the animation id string under `rigType` at `path` in the [`AnimationIds`](/api/AnimationIds) module.
+
+	```lua
+	local animIdStr = Animations:GetAnimationIdString("Player", "Run")
+	print(animIdStr) --> "rbxassetid://89327320"
+	```
+
+	:::tip *added in version 2.1.0*
+	:::
+]=]
+
+--[=[
+	@method FindFirstRigPlayingTrack 
+	@within AnimationsServer 
+	@param rig Model
+	@param path path
+	@return AnimationTrack?
+
+	Returns a playing animation track found in
+	`rig.Humanoid.Animator:GetPlayingAnimationTracks()`
+	matching the animation id found at `path` in the
+	[`AnimationIds`](/api/AnimationIds) module or `nil`.
+
+	```lua
+	-- [WARNING] For this to work, `enemyCharacter` would have to be registered (on the server) and "Blocking" would need to be a valid animation name defined in the `AnimationIds` module.
+	local isBlocking = Animations:FindFirstRigPlayingTrack(enemyCharacter, "Blocking")
+
+	if isBlocking then
+		warn("We can't hit the enemy, they're blocking!")
+	end
+	```
+
+	:::tip *added in version 2.1.0*
+	:::
+]=]
+--[=[
+	@yields
+	@method WaitForRigPlayingTrack
+	@within AnimationsServer
+	@param rig Model
+	@param path path
+	@param timeout number?
+	@return AnimationTrack?
+
+	Yields until a playing animation track is found in
+	`rig.Humanoid.Animator:GetPlayingAnimationTracks()`
+	matching the animation id found at `path` in the
+	[`AnimationIds`](/api/AnimationIds) module then returns it or returns `nil` after
+	`timeout` seconds if provided.
+
+	:::tip
+	Especially useful on the client if the animation needs time to replicate from server to client and you want to specify a maximum time to wait until it replicates.
+	:::
+
+	:::tip *added in version 2.1.0*
+	:::
+]=]
 
 --[=[
 	@method GetAppliedProfileName
@@ -304,6 +389,10 @@ end
 	@param rigType string
 
 	Registers the player's character/rig so that methods using animation tracks can be called.
+
+	:::note
+	All player characters get automatically registered through `player.CharacterAdded` events.
+	:::
 
 	:::tip
 	Automatically gives the character/rig an attribute `"AnimationsRigType"` set to the [`rigType`](/api/AnimationIds#rigType).
@@ -425,7 +514,6 @@ end
 	local Animations = require(game.ReplicatedStorage.Animations.Package.AnimationsServer)
 
 	Animations:Init({
-		AutoRegisterPlayers = true, -- Defaults to false (on the server)
 		AutoLoadAllPlayerTracks = true -- Defaults to false
 	})
 
@@ -484,7 +572,7 @@ end
 	:::caution *changed in version 2.0.0-rc1*
 	Renamed: ~~`LoadTracks`~~ -> `LoadAllTracks`
 
-	Now requires `Animations:Register()` before usage unless `player_or_rig` is a player and [`Animations.AutoRegisterPlayers`](/api/AnimationsServer/#AutoRegisterPlayers) is enabled.
+	If `player_or_rig` is a rig, this requires `Animations:Register()` before usage.
 	:::
 ]=]
 --[=[

@@ -3,7 +3,9 @@
 local Players = game:GetService("Players")
 local ContentProvider = game:GetService("ContentProvider")
 local RunService = game:GetService("RunService")
+local KeyframeSequenceProvider = game:GetService("KeyframeSequenceProvider")
 
+local AsyncInfoCache = require(script.Parent.AsyncInfoCache)
 local Signal = require(script.Parent.Signal)
 local Await = require(script.Parent.Await)
 local ChildFromPath = require(script.Parent.ChildFromPath)
@@ -13,6 +15,7 @@ local Queue = require(script.Parent.Queue)
 local Types = require(script.Parent.Parent.Util.Types)
 local AnimatedObject = require(script.AnimatedObject)
 local AnimatedObjectsCache = require(script.AnimatedObjectsCache)
+local GetAttributeAsync = require(script.Parent.Parent.Util.GetAttributeAsync)
 
 local ANIM_ID_STR = "rbxassetid://%i"
 local ANIMATED_OBJECT_INFO_ARR_STR = "animated object info array"
@@ -36,6 +39,9 @@ local AnimationIds = nil
 local animatedObjectsFolder = nil
 local animationProfiles = nil
 
+local allMarkerTimes = {}
+local markerTimesLoadedSignal = Signal.new()
+
 local function isPlayer(player_or_rig)
 	if player_or_rig.ClassName == "Player" then
 		return true
@@ -54,7 +60,7 @@ local function getRig(player_or_rig)
 			-- this function gets called before it has a
 			-- chance to load in.
 			if not playerCharacter then
-				warn("Infinite yield possible on 'player_or_rig.CharacterAdded:Wait()'")
+				warn(`Infinite yield possible on '{player_or_rig.Name}.CharacterAdded:Wait()'`)
 			end
 		end)
 
@@ -256,9 +262,15 @@ function AnimationsClass:_animationIdsToInstances()
 				mapAnimationInstanceToAnimatedObjectInfo(newAnimationInstance, state.animatedObjectInfo)
 			end
 
-			if state.runtimeProps then
+			local runtimeProps = state.runtimeProps
+			if runtimeProps then
+				if runtimeProps.MarkerTimes then -- Cache animation marker times for this animation
+					runtimeProps.MarkerTimes = nil
+					self:_cacheAnimationMarkerTimes(newAnimationInstance.AnimationId)
+				end
+
 				idTable[animationIndex] = {
-					_runtimeProps = state.runtimeProps,
+					_runtimeProps = runtimeProps,
 					_singleAnimation = newAnimationInstance
 				}
 			else
@@ -284,7 +296,14 @@ function AnimationsClass:_animationIdsToInstances()
 		self.PreloadAsyncFinishedSignal:Fire(clone)
 	end
 
+	local initialized = {}
 	for _, idTable in pairs(AnimationIds) do
+		if initialized[idTable] then
+			continue
+		end
+		
+		initialized[idTable] = true
+
 		initializeAnimationIds(idTable, {})
 	end
 
@@ -336,6 +355,35 @@ end
 -------------
 function AnimationsClass:_rigRegisteredAssertion(rig, ...)
 	CustomAssert(self.PerRig.IsRegistered[rig], "Rig not registered error [", rig:GetFullName(), "] -", ...)
+end
+
+function AnimationsClass:_cacheAnimationMarkerTimes(animId)
+	if allMarkerTimes[animId] == nil then
+		task.spawn(function()
+			allMarkerTimes[animId] = false -- Mark that we are loading this particular `animId`
+
+			local keyframeSequence: KeyframeSequence = AsyncInfoCache.asyncCall(3, KeyframeSequenceProvider, "GetKeyframeSequenceAsync", {animId})
+
+			if keyframeSequence then
+				local thisMarkerTimes = {}
+				local keyframes = keyframeSequence:GetKeyframes()
+
+				for _, v: Keyframe in ipairs(keyframes) do
+					local markers = v:GetMarkers()
+
+					for _, m: KeyframeMarker in ipairs(markers) do
+						thisMarkerTimes[m.Name] = v.Time
+					end
+				end
+
+				allMarkerTimes[animId] = thisMarkerTimes
+				markerTimesLoadedSignal:Fire(animId, thisMarkerTimes)
+			else
+				allMarkerTimes[animId] = nil
+				warn(self._moduleName, "failed to cache animation marker times for animation id", animId)
+			end
+		end)
+	end
 end
 
 function AnimationsClass:_initializedAssertion()
@@ -613,6 +661,7 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 
 	local function animator_LoadAnimation(animationInstance, animationName, parent_id_table, runtimeProps)
 		local track = animator:LoadAnimation(animationInstance)
+		track.Name = animationInstance.Name
 
 		parent_id_table[animationName] = track
 
@@ -649,7 +698,6 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 
 		return RAN_FULL_METHOD.No
 	elseif instance_or_id_table._singleAnimation then
-		print(player_or_rig, path, instance_or_id_table, parent_id_table)
 		animator_LoadAnimation(instance_or_id_table._singleAnimation, animationName, parent_id_table, instance_or_id_table._runtimeProps)
 
 		if self.TimeToLoadPrints then
@@ -756,6 +804,31 @@ function AnimationsClass:_areTracksLoadedAt(player_or_rig, path, parent, retIfNo
 	else
 		return instance_or_id_table[DESCENDANT_ANIMS_LOADED_MARKER], instance_or_id_table
 	end
+end
+
+function AnimationsClass:_getAnimId(rigType, path)
+	local newPath = path
+	if type(path) == "table" then
+		newPath = table.clone(path)
+		table.insert(newPath, 1, rigType)
+	else
+		newPath = rigType .. '.' .. path
+	end
+
+	-- `animDescriptor` is either an animation instance or
+	-- table with runtime props as created when the module
+	-- runs `_animationIdsToInstances()`
+	local ok, animDescriptor = pcall(ChildFromPath, AnimationIds, newPath)
+	CustomAssert(ok and (type(animDescriptor) == "userdata" or type(animDescriptor) == "table" and animDescriptor._singleAnimation), "No animation id found at path [", path, `] in [ AnimationIds.{rigType} ]`)
+
+	local animId
+	if type(animDescriptor) == "userdata" then
+		animId = animDescriptor.AnimationId
+	else
+		animId = animDescriptor._singleAnimation.AnimationId
+	end
+
+	return animId
 end
 
 -------------
@@ -1028,6 +1101,84 @@ function AnimationsClass:StopPlayingTracks(player_or_rig: Player | Model, fadeTi
 	end
 
 	return stoppedTracks
+end
+
+function AnimationsClass:FindFirstRigPlayingTrack(rig: Model, path: {any} | string): AnimationTrack?
+	self:_initializedAssertion()
+
+	local animator = getAnimator(rig, rig)
+	local rigType = GetAttributeAsync(rig, "AnimationsRigType")
+	local animId = self:_getAnimId(rigType, path)
+
+	local playingTracks = animator:GetPlayingAnimationTracks()
+	for _, v in playingTracks do
+		if v.Animation.AnimationId == animId then
+			return v
+		end
+	end
+
+	return nil
+end
+
+function AnimationsClass:GetAnimationIdString(rigType: string, path: {any} | string)
+	self:_initializedAssertion()
+	
+	return self:_getAnimId(rigType, path)
+end
+
+function AnimationsClass:GetTimeOfMarker(animTrack_or_IdString: AnimationTrack | string, markerName: string): number?
+	self:_initializedAssertion()
+
+	local animId = animTrack_or_IdString
+	if type(animTrack_or_IdString) == "userdata" then
+		animId = animTrack_or_IdString.Animation.AnimationId
+	end
+
+	local thisMarkerTimes = allMarkerTimes[animId]
+	if thisMarkerTimes == false then -- Indicating that it's currently loading
+		-- task.delay(3, function() -- If we were going to yield forever we'd want a warning
+		-- 	if not thisMarkerTimes then
+		-- 		warn(`Infinite yield possible on Animations:GetTimeOfMarker({animTrack}, {markerName})`)
+		-- 	end
+		-- end)
+
+		local _
+		_, thisMarkerTimes = Await.Args(3, markerTimesLoadedSignal, animId)
+	end
+
+	return thisMarkerTimes and thisMarkerTimes[markerName]
+end
+
+function AnimationsClass:WaitForRigPlayingTrack(rig: Model, path: {any} | string, timeout: number?): AnimationTrack?
+	self:_initializedAssertion()
+
+	local animator = getAnimator(rig, rig)
+	local rigType = GetAttributeAsync(rig, "AnimationsRigType")
+	local animId = self:_getAnimId(rigType, path)
+
+	local playingTracks = animator:GetPlayingAnimationTracks()
+	for _, v in playingTracks do
+		if v.Animation.AnimationId == animId then
+			return v
+		end
+	end
+
+	local anim = nil
+
+	if not timeout then
+		task.delay(3, function()
+			if not anim then
+				warn(`Infinite yield possible on 'Animations:WaitForRigPlayingTrack({rig}, {path})'`)
+			end
+		end)
+	end
+
+	local _
+	_, anim = Await.Args(timeout, animator.AnimationPlayed, function(v)
+		return v.Animation.AnimationId == animId
+	end)
+
+	return anim
 end
 
 function AnimationsClass:GetPlayingTracks(player_or_rig: Player | Model, fadeTime: number?): {AnimationTrack?}
