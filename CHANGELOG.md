@@ -6,7 +6,7 @@
 - Enhancements
     - Set animation track names to be the same as their source animation instance names for convenience.
     - Added [`Animations:WaitForRigPlayingTrack()`](/api/AnimationsServer/#WaitForRigPlayingTrack)/[`Animations:FindFirstRigPlayingTrack()`](/api/AnimationsServer/#FindFirstRigPlayingTrack). [Issue #62](https://github.com/wrello/Animations/issues/62)
-    - Added [`Animations:GetTimeOfMarker()`](/api/AnimationsServer/#GetTimeOfMarker). [Issue #64](https://github.com/wrello/Animations/issues/64)
+    - **[Beta]** Added [`Animations:GetTimeOfMarker()`](/api/AnimationsServer/#GetTimeOfMarker). [Issue #64](https://github.com/wrello/Animations/issues/64)
     - Added [`Animations:GetAnimationIdString()`](/api/AnimationsServer/#GetAnimationIdString).
 
 
