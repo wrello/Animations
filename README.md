@@ -9,5 +9,5 @@ Website: https://wrello.github.io/Animations/
 
 | Install Type | Item |
 | ---          | --- |
-| Roblox model v2.0.0 | https://create.roblox.com/marketplace/asset/14292949504 |
+| Roblox model | https://create.roblox.com/marketplace/asset/14292949504 |
 | Command | `game:GetService("InsertService"):LoadAsset(14292949504).Animations.Parent = game.ReplicatedStorage` |
