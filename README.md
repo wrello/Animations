@@ -11,3 +11,5 @@ Website: https://wrello.github.io/Animations/
 | ---          | --- |
 | Roblox model | https://create.roblox.com/marketplace/asset/14292949504 |
 | Command | `game:GetService("InsertService"):LoadAsset(14292949504).Animations.Parent = game.ReplicatedStorage` |
+| Wally |  `Animations = "wrello/animations@2.2.0"` |
+| Pesde | `Animations = { name = "wrello/animations", version = "^2.2.0" }` |
