@@ -9,7 +9,7 @@
     local Animations = require(game.ReplicatedStorage.Packages.Animations)
     ```
     [Issue #67](https://github.com/wrello/Animations/issues/67)
-    - Switched out my `Signal` utility module with [`LemonSignal`](https://github.com/Data-Oriented-House/LemonSignal) for better stability and performance. [Issue #69](https://github.com/wrello/Animations/issues/69)
+    - Switched to using [`LemonSignal`](https://github.com/Data-Oriented-House/LemonSignal) for better stability and performance. [Issue #69](https://github.com/wrello/Animations/issues/69)
 
 
 ## v2.1.0
