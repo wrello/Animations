@@ -671,8 +671,11 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 		end
 
 		if runtimeProps then
-			for k, v in pairs(runtimeProps) do
-				track[k] = v
+			if runtimeProps.Looped ~= nil then
+				track.Looped = runtimeProps.Looped
+			end
+			if runtimeProps.Priority ~= nil then
+				track.Priority = runtimeProps.Priority
 			end
 		end
 	end

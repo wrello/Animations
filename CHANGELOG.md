@@ -1,3 +1,17 @@
+## v2.2.0
+> ###### 3/21/2024
+
+----
+
+- Enhancements
+    - Better Wally support. You can now simply require `Animations` like so (only with Wally): 
+    ```lua
+    local Animations = require(game.ReplicatedStorage.Packages.Animations)
+    ```
+    [Issue #67](https://github.com/wrello/Animations/issues/67)
+    - Switched out my `Signal` utility module with [`LemonSignal`](https://github.com/Data-Oriented-House/LemonSignal) for better stability and performance. [Issue #69](https://github.com/wrello/Animations/issues/69)
+
+
 ## v2.1.0
 > ###### 12/27/2024
 
@@ -17,6 +31,7 @@
 - Fixes
     - Utility module `ChildFromPath` bug. [Issue #59](https://github.com/wrello/Animations/issues/59)
     - Documentation fixes. [Issue #58](https://github.com/wrello/Animations/issues/58)
+
 
 ## v2.0.0
 > ###### 8/24/2024

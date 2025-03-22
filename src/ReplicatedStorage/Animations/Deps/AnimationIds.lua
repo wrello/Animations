@@ -49,6 +49,12 @@ local HasProperties = AnimationIdsUtil.HasProperties
 	:::tip *added in version 2.0.0*
 	:::
 
+	:::caution *changed in version 2.1.0*
+	Added `MarkerTimes` property.
+
+	Look at [`Animations:GetTimeOfMarker()`](/api/AnimationsServer#GetTimeOfMarker) for more information.
+	:::
+
 	```lua
 	local AnimationIds = {
 		Player = { -- `rigType` of "Player"
