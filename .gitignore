@@ -8,8 +8,11 @@
 *.lock
 *.toml
 *.moonwave
-docs
-build
+/docs/
+/build/
 Build-Wally.ps1
-/Animations/
+/Animations*
 /Packages/
+/test/
+/Build*
+/luau_packages/
