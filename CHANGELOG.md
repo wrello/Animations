@@ -5,7 +5,7 @@
 
 - Enhancements
     - Added pesde support.
-    - Added better Wally support. You can now require `Animations` like so (only with Wally): 
+    - Added better Wally support. You can now require `Animations` like so (if installed as a Wally dependency): 
     ```lua
     local Animations = require(game.ReplicatedStorage.Packages.Animations)
     ```
