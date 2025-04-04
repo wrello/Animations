@@ -1,3 +1,13 @@
+## v2.3.0
+> ###### 4/3/2024
+
+----
+
+- Enhancements
+    - Added `StartSpeed` to [`HasProperties`](/api/AnimationIds#HasProperties) and corresponding [`Animations:GetTrackStartSpeed()`](/api/AnimationsServer#GetTrackStartSpeed) method. [Issue #70](https://github.com/wrello/Animations/issues/70)
+    - Added better documentation for [`HasProperties`](/api/AnimationIds#propertiesSettings) and [`HasAnimatedObject`](/api/AnimationIds#animatedObjectSettings).
+    - Added code example for [`AnimationsClient:PlayRigTrack()`](/api/AnimationsClient#PlayRigTrack).
+
 ## v2.2.0
 > ###### 3/21/2024
 

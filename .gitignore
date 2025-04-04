@@ -16,3 +16,4 @@ Build-Wally.ps1
 /test/
 /Build*
 /luau_packages/
+/roblox_packages/

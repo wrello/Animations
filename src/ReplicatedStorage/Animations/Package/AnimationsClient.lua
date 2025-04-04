@@ -1,6 +1,5 @@
 --!strict
 -- made by wrello
--- v2.0.0
 -- GitHub: https://github.com/wrello/Animations
 
 assert(game:GetService("RunService"):IsClient(), "Attempt to require AnimationsClient on the server")
@@ -271,6 +270,30 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 end
 
 --[=[
+	@method GetTrackStartSpeed
+	@within AnimationsClient
+	@param path path
+	@return number?
+
+	Returns the animation track's `StartSpeed` (if set in [`HasProperties`](/api/AnimationIds#HasProperties)) or `nil`.
+
+	:::tip *added in version 2.3.0*
+	:::
+]=]
+--[=[
+	@method GetRigTrackStartSpeed
+	@within AnimationsClient
+	@param rig Model
+	@param path path
+	@return number?
+
+	Returns the animation track's `StartSpeed` (if set in [`HasProperties`](/api/AnimationIds#HasProperties)) or `nil`.
+
+	:::tip *added in version 2.3.0*
+	:::
+]=]
+
+--[=[
 	@yields
 	@tag Beta
 	@method GetTimeOfMarker
@@ -387,7 +410,7 @@ end
 	@within AnimationsClient
 	@return string?
 
-	Returns the client's currently applied animation profile name or nil.
+	Returns the client's currently applied animation profile name or `nil`.
 
 	:::tip *added in version 2.0.0*
 	:::
@@ -398,7 +421,7 @@ end
 	@param rig Model
 	@return string?
 
-	Returns the `rig`'s currently applied animation profile name or nil.
+	Returns the `rig`'s currently applied animation profile name or `nil`.
 
 	:::tip *added in version 2.0.0*
 	:::
@@ -807,7 +830,7 @@ end
 	@param path path
 	@return AnimationTrack?
 
-	Returns a client animation track or nil.
+	Returns a client animation track or `nil`.
 ]=]
 --[=[
 	@method GetRigTrack
@@ -816,7 +839,7 @@ end
 	@param path path
 	@return AnimationTrack?
 
-	Returns a `rig` animation track or nil.
+	Returns a `rig` animation track or `nil`.
 ]=]
 
 --[=[
@@ -841,6 +864,18 @@ end
 	@return AnimationTrack
 
 	Returns a playing `rig` animation track.
+
+	```lua
+	-- `rigType` of "Spider":
+	Animations:RegisterRig(rig, "Spider")
+	Animations:LoadAllRigTracks(rig)
+	Animations:PlayRigTrack(rig, "Crawl")
+
+	-- or if you're doing `:RegisterRig()` and
+	-- `:LoadAllTracks()` for the `rig` somewhere else:
+	Animations:AwaitAllRigTracksLoaded(rig)
+	Animations:PlayRigTrack(rig)
+	```
 ]=]
 
 --[=[
@@ -936,7 +971,7 @@ end
 	@param alias any
 	@return AnimationTrack?
 
-	Returns a client animation track or nil.
+	Returns a client animation track or `nil`.
 ]=]
 --[=[
 	@method GetRigTrackFromAlias
@@ -945,7 +980,7 @@ end
 	@param alias any
 	@return AnimationTrack?
 
-	Returns a `rig` animation track or nil.
+	Returns a `rig` animation track or `nil`.
 ]=]
 
 --[=[

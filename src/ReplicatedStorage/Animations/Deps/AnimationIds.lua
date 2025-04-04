@@ -43,16 +43,28 @@ local HasProperties = AnimationIdsUtil.HasProperties
 ]=]
 
 --[=[
-	@type HasProperties (animationId: idTable, propertiesSettings: {Priority: Enum.AnimationPriority?, Looped: boolean?, DoUnpack: boolean?, MarkerTimes: boolean?}): {}
+	@interface propertiesSettings
+	@within AnimationIds
+	.Priority Enum.AnimationPriority?
+	.Looped boolean?
+	.StartSpeed number? -- Auto set animation speed through [`Animations:PlayTrack()`](/api/AnimationsServer#PlayTrack) related methods
+	.DoUnpack boolean? -- Set the key-value pairs of [`animationId`](#HasProperties) (if it's a table) *in the parent table*
+	.MarkerTimes boolean? -- Support [`Animations:GetTimeOfMarker()`](/api/AnimationsServer#GetTimeOfMarker)
+
+	:::caution *changed in version 2.1.0*
+	Added `MarkerTimes` property	
+	:::
+	
+	:::caution *changed in version 2.3.0*
+	Added `StartSpeed` property
+	:::
+]=]
+
+--[=[
+	@type HasProperties (animationId: idTable, propertiesSettings: propertiesSettings): {}
 	@within AnimationIds
 
 	:::tip *added in version 2.0.0*
-	:::
-
-	:::caution *changed in version 2.1.0*
-	Added `MarkerTimes` property.
-
-	Look at [`Animations:GetTimeOfMarker()`](/api/AnimationsServer#GetTimeOfMarker) for more information.
 	:::
 
 	```lua
@@ -90,8 +102,16 @@ local HasProperties = AnimationIdsUtil.HasProperties
 ]=]
 
 --[=[
+	@interface animatedObjectSettings
+	@within AnimationIds
+	.AutoAttach boolean?
+	.AutoDetach boolean?
+	.DoUnpack boolean? -- Set the key-value pairs of [`animationId`](#HasAnimatedObject) (if it's a table) *in the parent table*
+]=]
+
+--[=[
 	@tag Beta
-	@type HasAnimatedObject (animationId: idTable, animatedObjectPath: path, animatedObjectSettings: {AutoAttach: boolean?, AutoDetach: boolean?, DoUnpack: boolean?}): {}
+	@type HasAnimatedObject (animationId: idTable, animatedObjectPath: path, animatedObjectSettings: animatedObjectSettings): {}
 	@within AnimationIds
 
 	```lua

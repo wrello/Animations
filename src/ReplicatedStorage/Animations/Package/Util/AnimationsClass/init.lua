@@ -438,7 +438,7 @@ function AnimationsClass:_playStopTrack(play_stop, player_or_rig, path, isAlias,
 	local track = self:_getTrack(player_or_rig, path, isAlias)
 	CustomAssert(track, "No track found at path [", path, "]", "for [", player_or_rig:GetFullName(), "]")
 
-	track[play_stop](track, fadeTime, weight, speed)
+	track[play_stop](track, fadeTime, weight, speed or track:GetAttribute("StartSpeed"))
 
 	return track
 end
@@ -677,6 +677,9 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 			if runtimeProps.Priority ~= nil then
 				track.Priority = runtimeProps.Priority
 			end
+			if runtimeProps.StartSpeed ~= nil then
+				track:SetAttribute("StartSpeed", runtimeProps.StartSpeed) -- Make it easier to access
+			end
 		end
 	end
 
@@ -843,6 +846,12 @@ function AnimationsClass:AwaitPreloadAsyncFinished()
 	end
 
 	return RAN_FULL_METHOD.No
+end
+
+function AnimationsClass:GetTrackStartSpeed(player_or_rig: Player | Model, path: {any} | string): number?
+	self:_initializedAssertion()
+	
+	return self:_getTrack(player_or_rig, path):GetAttribute("StartSpeed")
 end
 
 function AnimationsClass:AttachAnimatedObject(player_or_rig: Player | Model, animatedObjectPath: {any} | string)

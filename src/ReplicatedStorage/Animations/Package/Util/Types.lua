@@ -15,6 +15,8 @@ export type AnimationsServerType = {
 
 	AwaitPreloadAsyncFinished: (self: AnimationsServerType) -> {Animation?} | RanFullMethodType,
 
+	GetTrackStartSpeed: (self: AnimationsServerType, player_or_rig: Player | Model, path: {any} | string) -> number?,
+
 	LoadTracksAt: (self: AnimationsServerType, player_or_rig: Player | Model, path: {any} | string) -> RanFullMethodType,
 	LoadAllTracks: (self: AnimationsServerType, player_or_rig: Player | Model) -> RanFullMethodType,
 
@@ -64,6 +66,9 @@ export type AnimationsClientType = {
 	Init: (self: AnimationsClientType, initOptions: AnimationsClientInitOptionsType?) -> (),
 
 	AwaitPreloadAsyncFinished: (self: AnimationsClientType) -> {Animation?} | RanFullMethodType,
+
+	GetTrackStartSpeed: (self: AnimationsClientType, path: {any} | string) -> number?,
+	GetRigTrackStartSpeed: (self: AnimationsClientType, rig: Model, path: {any} | string) -> number?,
 
 	AreTracksLoadedAt: (self: AnimationsClientType, path: {any} | string) -> boolean,
 	AreRigTracksLoadedAt: (self: AnimationsClientType, rig: Model, path: {any} | string) -> boolean,

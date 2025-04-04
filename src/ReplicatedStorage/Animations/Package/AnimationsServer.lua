@@ -1,6 +1,5 @@
 --!strict
 -- made by wrello
--- v2.0.0
 -- GitHub: https://github.com/wrello/Animations
 
 assert(game:GetService("RunService"):IsServer(), "Attempt to require AnimationsServer on the client")
@@ -203,6 +202,19 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 end
 
 --[=[
+	@method GetTrackStartSpeed
+	@within AnimationsServer
+	@param player_or_rig Player | Model
+	@param path path
+	@return number?
+
+	Returns the animation track's `StartSpeed` (if set in [`HasProperties`](/api/AnimationIds#HasProperties)) or `nil`.
+
+	:::tip *added in version 2.3.0*
+	:::
+]=]
+
+--[=[
 	@yields
 	@tag Beta
 	@method GetTimeOfMarker
@@ -313,7 +325,7 @@ end
 	@param player_or_rig Player | Model
 	@return string?
 
-	Returns the `player_or_rig`'s currently applied animation profile name or nil.
+	Returns the `player_or_rig`'s currently applied animation profile name or `nil`.
 
 	:::tip *added in version 2.0.0*
 	:::
@@ -594,7 +606,7 @@ end
 	@param path path
 	@return AnimationTrack?
 	
-	Returns a `player_or_rig`'s animation track or nil.
+	Returns a `player_or_rig`'s animation track or `nil`.
 ]=]
 
 --[=[
@@ -662,7 +674,7 @@ end
 	@param alias any
 	@return AnimationTrack?
 
-	Returns a `player_or_rig`'s animation track or nil.
+	Returns a `player_or_rig`'s animation track or `nil`.
 ]=]
 
 --[=[
