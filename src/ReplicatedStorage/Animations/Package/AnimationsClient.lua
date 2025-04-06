@@ -874,7 +874,7 @@ end
 	-- or if you're doing `:RegisterRig()` and
 	-- `:LoadAllTracks()` for the `rig` somewhere else:
 	Animations:AwaitAllRigTracksLoaded(rig)
-	Animations:PlayRigTrack(rig)
+	Animations:PlayRigTrack(rig, "Crawl")
 	```
 ]=]
 
