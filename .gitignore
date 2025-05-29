@@ -4,4 +4,16 @@
 *.rbxl.lock
 *.rbxmx
 *.rbxm
-build
+*.json
+*.lock
+*.toml
+*.moonwave
+/docs/
+/build/
+Build-Wally.ps1
+/Animations*
+/Packages/
+/test/
+/Build*
+/luau_packages/
+/roblox_packages/

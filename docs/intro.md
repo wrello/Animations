@@ -14,4 +14,4 @@ or paste the following command into your roblox studio command bar:
 game:GetService("InsertService"):LoadAsset(14292949504).Animations.Parent = game.ReplicatedStorage
 ```
 
-- [Basic Usage](/docs/basic-usage.md)
+- [Basic Usage](/docs/basic-usage)

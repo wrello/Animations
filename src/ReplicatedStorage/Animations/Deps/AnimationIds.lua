@@ -1,11 +1,15 @@
 local Types = require(script.Parent.Parent.Package.Util.Types)
+local AnimationIdsUtil = require(script.Parent.Parent.Package.Util.AnimationIdsUtil)
+
+local HasAnimatedObject = AnimationIdsUtil.HasAnimatedObject
+local HasProperties = AnimationIdsUtil.HasProperties
 
 --[=[
 	@type rigType string
 	@within AnimationIds
-	
-	The first key in the `AnimationId`s module that indicates the type of rig the paired animation id table belongs to.
-	
+
+	The first key in the `AnimationIds` module that indicates the type of rig the paired animation id table belongs to.
+
 	```lua
 	local AnimationIds = {
 		Player = { -- `rigType` of "Player"
@@ -21,7 +25,7 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 		}
 	}
 	```
-	
+
 	:::info
 	The only preset `rigType` is that of **"Player"** for all player/client animation ids.
 	:::
@@ -39,13 +43,123 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 ]=]
 
 --[=[
+	@interface propertiesSettings
+	@within AnimationIds
+	.Priority Enum.AnimationPriority?
+	.Looped boolean?
+	.StartSpeed number? -- Auto set animation speed through [`Animations:PlayTrack()`](/api/AnimationsServer#PlayTrack) related methods
+	.DoUnpack boolean? -- Set the key-value pairs of [`animationId`](#HasProperties) (if it's a table) *in the parent table*
+	.MarkerTimes boolean? -- Support [`Animations:GetTimeOfMarker()`](/api/AnimationsServer#GetTimeOfMarker)
+
+	:::caution *changed in version 2.1.0*
+	Added `MarkerTimes` property	
+	:::
+	
+	:::caution *changed in version 2.3.0*
+	Added `StartSpeed` property
+	:::
+]=]
+
+--[=[
+	@type HasProperties (animationId: idTable, propertiesSettings: propertiesSettings): {}
+	@within AnimationIds
+
+	:::tip *added in version 2.0.0*
+	:::
+
+	```lua
+	local AnimationIds = {
+		Player = { -- `rigType` of "Player"
+			Dodge = {
+				[Enum.KeyCode.W] = 0000000,
+				[Enum.KeyCode.S] = 0000000,
+				[Enum.KeyCode.A] = 0000000,
+				[Enum.KeyCode.D] = 0000000,
+			},
+			Run = 0000000,
+			Walk = 0000000,
+			Idle = 0000000,
+			Sword = {
+				-- Now when the "Sword.Walk" animation plays it will
+				-- automatically have `Enum.AnimationPriority.Action` priority
+				Walk = HasProperties(0000000, { Priority = Enum.AnimationPriority.Action })
+
+				Idle = 0000000,
+				Run = 0000000,
+
+	            -- Now when {"Sword", "AttackCombo", 1 or 2 or 3} animation
+	            -- plays it will automatically have `Enum.AnimationPriority.Action` priority and
+				-- will support `Animations:GetTimeOfMarker()`
+				AttackCombo = HasProperties({
+					[1] = 0000000,
+					[2] = 0000000,
+					[3] = 0000000
+				}, { Priority = Enum.AnimationPriority.Action, MarkerTimes = true })
+			}
+		},
+	}
+	```
+]=]
+
+--[=[
+	@interface animatedObjectSettings
+	@within AnimationIds
+	.AutoAttach boolean?
+	.AutoDetach boolean?
+	.DoUnpack boolean? -- Set the key-value pairs of [`animationId`](#HasAnimatedObject) (if it's a table) *in the parent table*
+]=]
+
+--[=[
+	@tag Beta
+	@type HasAnimatedObject (animationId: idTable, animatedObjectPath: path, animatedObjectSettings: animatedObjectSettings): {}
+	@within AnimationIds
+
+	```lua
+	local AnimationIds = {
+		Player = { -- `rigType` of "Player"
+			Dodge = {
+				[Enum.KeyCode.W] = 0000000,
+				[Enum.KeyCode.S] = 0000000,
+				[Enum.KeyCode.A] = 0000000,
+				[Enum.KeyCode.D] = 0000000,
+			},
+			Run = 0000000,
+			Walk = 0000000,
+			Idle = 0000000,
+			Sword = {
+				-- Now when the "Sword.Walk" animation plays "Sword" will
+				-- auto attach to the player and get animated
+				Walk = HasAnimatedObject(0000000, "Sword", { AutoAttach = true })
+
+				Idle = 0000000,
+				Run = 0000000,
+
+				-- Now when {"Sword", "AttackCombo", 1 or 2 or 3} animation
+				-- plays "Sword" will auto attach to the player and get
+				-- animated
+				AttackCombo = HasAnimatedObject({
+					[1] = 0000000,
+					[2] = 0000000,
+					[3] = 0000000
+				}, "Sword", { AutoAttach = true })
+			}
+		},
+	}
+	```
+
+	:::info
+	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
+	:::
+]=]
+
+--[=[
 	@interface AnimationIds
 	@within AnimationIds
 	.[rigType] idTable
 
 	```lua
 	local AnimationIds = {
-		Player = {
+		Player = { -- `rigType` of "Player"
 			Dodge = {
 				[Enum.KeyCode.W] = 0000000,
 				[Enum.KeyCode.S] = 0000000,
@@ -56,8 +170,8 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 			Walk = 0000000,
 			Idle = 0000000
 		},
-		
-		BigMonster = {
+
+		BigMonster = { -- `rigType` of "BigMonster"
 			HardMode = {
 				Attack1 = 0000000,
 				Attack2 = 0000000
@@ -67,8 +181,8 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 				Attack2 = 0000000
 			}
 		},
-		
-		SmallMonster = {
+
+		SmallMonster = { -- `rigType` of "SmallMonster"
 			HardMode = {
 				Attack1 = 0000000,
 				Attack2 = 0000000
@@ -81,18 +195,17 @@ local Types = require(script.Parent.Parent.Package.Util.Types)
 	}
 	```
 ]=]
-type AnimationIdsType = Types.AnimationIdsType
 
 --[=[
 	@tag Read Only
 	@class AnimationIds
-	
+
 	:::note
 	Roblox model path: `Animations.Deps.AnimationIds`
 	:::
 ]=]
 local AnimationIds = {
-	
+
 }
 
-return AnimationIds :: AnimationIdsType
+return AnimationIds :: Types.AnimationIdsType

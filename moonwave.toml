@@ -18,6 +18,7 @@ includeReadme = false
 onBrokenLinks = "throw"
 onBrokenMarkdownLinks = "warn"
 tagline = "An easy to use module for playing and pre-loading animations"
+favicon = "/images/AnimationsLogo250x250.png"
 
 [[navbar.items]]
 href = "https://devforum.roblox.com/t/animations-a-robust-easy-to-use-animation-player-pre-loader/2504740"
@@ -32,5 +33,5 @@ copyright = "Built with Moonwave and Docusaurus"
 title = "Links"
 
 [[footer.links.items]]
-label = "Support"
-href = "https://www.paypal.com/paypalme/isaacpalmr"
+label = "Buy me a coffee"
+href = "https://buymeacoffee.com/wrello"

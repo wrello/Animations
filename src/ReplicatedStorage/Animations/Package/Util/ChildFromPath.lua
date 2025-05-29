@@ -1,44 +1,23 @@
 -- made by wrello
--- v1.0.0
+-- v2.0.1
 
-local function ChildFromPath(parent, path, index)
-	if typeof(path) == "string" then -- A path string. Ex. "MyChild.MyDescendant" or "MyChild"
-		local childKey, period = path:match("^([^%.]+)(%.?)")
+local function ChildFromPath(parent, path)
+	local child = parent
 
-		if childKey  then
-			path = path:gsub(childKey .. period, "")
-
-			if typeof(parent) == "Instance" then
-				return ChildFromPath(parent:FindFirstChild(childKey), path)
-			else
-				return ChildFromPath(parent[childKey], path)
-			end
-		else
-			return parent
+	if type(path) == "string" then
+		local function forEachMatch(m)
+			local v = child[m]
+			child = if v ~= nil then v else child[tonumber(m)]
 		end
-	elseif typeof(path) == "table" then -- A path table. Ex. { Vector3.new(), "MyDescendant", "MyDescendant2" }
-		index = index or 1
 
-		local childKey = path[index]
-
-		if childKey ~= nil then
-			index += 1
-
-			if typeof(parent) == "Instance" then
-				return ChildFromPath(parent:FindFirstChild(childKey), path, index)
-			else
-				return ChildFromPath(parent[childKey], path, index)
-			end
-		else
-			return parent
-		end
-	else -- An immediate non-string child key. Ex. Vector3.yAxis or 43
-		if typeof(parent) == "Instance" then
-			return parent:FindFirstChild(path)
-		else
-			return parent[path]
+		string.gsub(path, "[^.]+", forEachMatch)
+	else
+		for _, token in ipairs(path) do
+			child = child[token]
 		end
 	end
+
+	return child
 end
 
 return ChildFromPath
