@@ -322,17 +322,27 @@ function AnimationsClass:_animationIdsToInstances()
 
 	local function preloadAsync()
 		local len = #self._preloadAsyncArray
+
+		local loaded = 0
 		for i, animation in ipairs(self._preloadAsyncArray) do
-			ContentProvider:PreloadAsync({animation})
-			self.PreloadAsyncProgressed:Fire(i, len, animation)
+			task.spawn(function()
+				ContentProvider:PreloadAsync({animation})
+				loaded += 1
+
+				self.PreloadAsyncProgressed:Fire(i, len, loaded)
+
+				if loaded == len then
+					local clone = table.clone(self._preloadAsyncArray)
+
+					table.clear(self._preloadAsyncArray)
+					self._preloadAsyncArray = nil
+
+					self.PreloadAsyncFinishedSignal:Fire(clone)
+				end
+			end)
 		end
 
-		local clone = table.clone(self._preloadAsyncArray)
-
-		table.clear(self._preloadAsyncArray)
-		self._preloadAsyncArray = nil
-
-		self.PreloadAsyncFinishedSignal:Fire(clone)
+		self.PreloadAsyncFinishedSignal:Wait()
 	end
 
 	local initialized = {}
