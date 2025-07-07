@@ -329,7 +329,7 @@ function AnimationsClass:_animationIdsToInstances()
 				ContentProvider:PreloadAsync({animation})
 				loaded += 1
 
-				self.PreloadAsyncProgressed:Fire(i, len, loaded)
+				self.PreloadAsyncProgressed:Fire(loaded, len, animation)
 
 				if loaded == len then
 					local clone = table.clone(self._preloadAsyncArray)
