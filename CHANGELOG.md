@@ -2,7 +2,7 @@
 > ###### 7/9/2025
 ----
 - Enhancements
-    - Improved preload async time by preloading animations in concurrently.
+    - Improved preload async time by preloading animations concurrently.
 
 ## v2.4.0
 > ###### 5/28/2025
