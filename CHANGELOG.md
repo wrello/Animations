@@ -1,9 +1,8 @@
 ## v2.5.0
-> ###### 7/7/2025
+> ###### 7/9/2025
 ----
 - Enhancements
     - Improved preload async time by preloading animations in concurrently.
-
 
 ## v2.4.0
 > ###### 5/28/2025
@@ -17,6 +16,7 @@
     - **[Beta]** You can no longer use [`Animations:AttachAnimatedObject()`](/api/AnimationsServer#AttachAnimatedObject) with a single motor6d. This is because after equipping a tool with `humanoid:EquipTool()`, the tool will most likely not immediately be parented to the character ([Roblox quirk that is discussed here](https://devforum.roblox.com/t/tools-new-parent-is-delayed-when-using-humanoidequiptool-potential-studio-bug/3667271)), so [`Animations:AttachAnimatedObject()`](/api/AnimationsServer#AttachAnimatedObject) will fail to attach the motor6d.
 - Fixes
     - Fixed an issue where auto attaching of animated objects would fail due to mismatched animation ids.
+
 ## v2.3.0
 > ###### 4/3/2025
 
