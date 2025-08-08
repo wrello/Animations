@@ -233,15 +233,19 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 				local animateScript = char:WaitForChild("Animate")
 
 				self:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
-
-				RunService.Stepped:Wait() -- Without a task.wait() or a RunService.Stepped:Wait() the running animation bugs if the rig is moving when this function is called
 			end
 
 			local char = player.Character
 			hum = char:FindFirstChild("Humanoid")
 
 			if hum then
-				hum:ChangeState(Enum.HumanoidStateType.Landed) -- Hack to force apply the new animations.
+				-- Here we have to hack the state system to force apply the new
+				-- animation ids if we don't want to modify the 'Animate' script
+				if hum:GetState() == Enum.HumanoidStateType.Freefall then -- Can't change to 'Landed' mid-air because it will freeze the character
+					hum:ChangeState(Enum.HumanoidStateType.Running)
+				else
+					hum:ChangeState(Enum.HumanoidStateType.Landed)
+				end
 			end
 		end
 

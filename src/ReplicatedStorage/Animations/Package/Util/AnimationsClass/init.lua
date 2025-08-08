@@ -107,6 +107,10 @@ local function createAnimatedObjectInfoArray()
 	return setmetatable({}, { __metatable = ANIMATED_OBJECT_INFO_ARR_STR })
 end
 
+local function getAnimIdNumber(animIdString)
+	return tonumber(animIdString:match("%d+$"))
+end
+
 local function deepClone(t)
 	local clone = {}
 
@@ -624,22 +628,30 @@ function AnimationsClass:_editAnimateScriptValues(animator, animateScript, humRi
 	for _, track: AnimationTrack in ipairs(animator:GetPlayingAnimationTracks()) do
 		track:Stop(0)
 	end
-	
+
 	for animName, animId in pairs(humRigTypeCustomRBXAnimationIds) do
 		local rbxAnimInstancesContainer = animateScript:FindFirstChild(animName)
 
 		if rbxAnimInstancesContainer then
 			for _, animInstance in ipairs(rbxAnimInstancesContainer:GetChildren()) do
 				local animInstance = animInstance :: Animation
+				local oldAnimId = getAnimIdNumber(animInstance.AnimationId)
 
 				if type(animId) == "table" then
-					local animId = animId[animInstance.Name]
+					local animIdTable = animId
+					local newAnimId = animIdTable[animInstance.Name]
+					local animIdChanged = newAnimId and newAnimId ~= oldAnimId
 
-					if animId then
-						animInstance.AnimationId = ANIM_ID_STR:format(animId)
+					if animIdChanged then
+						animInstance.AnimationId = ANIM_ID_STR:format(newAnimId)
 					end
 				else
-					animInstance.AnimationId = ANIM_ID_STR:format(animId)
+					local newAnimId = animId
+					local animIdChanged = newAnimId ~= oldAnimId
+
+					if animIdChanged then
+						animInstance.AnimationId = ANIM_ID_STR:format(newAnimId)
+					end
 				end
 			end
 		end
@@ -650,7 +662,7 @@ function AnimationsClass:_applyCustomRBXAnimationIds(player_or_rig, humanoidRigT
 	local rig = getRig(player_or_rig)
 	local animator = getAnimator(player_or_rig, rig)
 
-	-- These two things (hum + animatedScript) are traits of R6/R15 NPCs and
+	-- These two things (Humanoid + Animate script) are traits of R6/R15 NPCs and
 	-- player characters, the only rigs this function should be called on. They
 	-- might not exist for custom rigs and therefore this could produce an
 	-- infinite yield error.
