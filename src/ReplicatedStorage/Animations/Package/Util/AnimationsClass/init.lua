@@ -601,30 +601,6 @@ function AnimationsClass:_attachDetachAnimatedObject(attach_detach, player_or_ri
 end
 
 function AnimationsClass:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
-	-- Server + NPC (no wait + no stop tracks):
-	-- Applies correctly on server
-
-	-- Server + NPC (no wait + yes stop tracks):
-	-- Applies correctly on client
-	
-	-- Server + NPC (yes wait + no stop tracks):
-	-- Applies correctly on server
-
-	-- Server + NPC (yes wait + yes stop tracks):
-	-- Applies correctly on client/server
-
-	-- Client + Client (no wait + no stop tracks):
-	-- Applies correctly on client
-	
-	-- Client + Client (no wait + yes stop tracks):
-	-- Applies correctly on server
-	
-	-- Client + Client (yes wait + no stop tracks):
-	-- Applies correctly on client
-
-	-- Client + Client (yes wait + yes stop tracks):
-	-- Applies correctly on client/server
-
 	for _, track: AnimationTrack in ipairs(animator:GetPlayingAnimationTracks()) do
 		track:Stop(0)
 	end
