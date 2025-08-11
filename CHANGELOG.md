@@ -4,7 +4,7 @@
 
 - Fixes
     - Fixed animations freezing when [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer#ApplyAnimationProfile) was called mid free fall.
-    - Improved the animation stutter caused by [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer#ApplyAnimationProfile) by removing an uncessary `RunService.Stepped:Wait()`.
+    - Improved the animation stutter caused by [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer#ApplyAnimationProfile) by removing an unecessary `RunService.Stepped:Wait()`.
 
 ## v2.5.0
 > ###### 7/9/2025
