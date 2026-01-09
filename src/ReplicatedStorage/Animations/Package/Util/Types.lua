@@ -185,17 +185,17 @@ export type AnimationIdsType = {
 }
 
 type AnimationsSharedInitOptionsType = {
-	DepsFolderPath: string?,
+	BootstrapDepsFolder: Folder?,
 	AutoLoadAllPlayerTracks: boolean?,
 	TimeToLoadPrints: boolean?,
 	AnimatedObjectsDebugMode: boolean?,
 	EnableAutoCustomRBXAnimationIds: boolean?
 }
 export type AnimationsClientInitOptionsType = {
-
+	AutoRegisterPlayer: boolean?
 } & AnimationsSharedInitOptionsType
 export type AnimationsServerInitOptionsType = {
-
+	AutoRegisterPlayers: boolean?
 } & AnimationsSharedInitOptionsType
 
 return {}

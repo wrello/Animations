@@ -20,12 +20,13 @@ local AutoCustomRBXAnimationIds = nil
 	@interface initOptions
 	@within AnimationsClient
 	.AutoLoadAllPlayerTracks false
-	.TimeToLoadPrints true
+	.AutoRegisterPlayer true
+	.BootstrapDepsFolder Folder?
 	.EnableAutoCustomRBXAnimationIds false
+	.TimeToLoadPrints true
 	.AnimatedObjectsDebugMode false
-	.DepsFolderPath string? -- Only use if you've moved the 'Deps' folder from its original location.
 
-	Gets applied to [`Properties`](/api/AnimationsClient/#properties).
+	For more info, see [`Properties`](/api/AnimationsClient/#properties).
 ]=]
 type AnimationsClientInitOptionsType = Types.AnimationsClientInitOptionsType
 
@@ -66,17 +67,6 @@ local Animations = AnimationsClass.new(script.Name)
 local AnimationsClient = Animations
 
 --[=[
-	@prop DepsFolderPath nil
-	@within AnimationsClient
-
-	Set the path to the dependencies folder if you have moved it from its original location inside of the root `Animations` folder.
-
-	:::tip *added in version 2.0.0-rc1*
-	:::
-]=]
-AnimationsClient.DepsFolderPath = nil
-
---[=[
 	@prop AutoLoadAllPlayerTracks false
 	@within AnimationsClient
 
@@ -93,12 +83,30 @@ AnimationsClient.DepsFolderPath = nil
 AnimationsClient.AutoLoadAllPlayerTracks = false
 
 --[=[
-	@prop TimeToLoadPrints true
+	@prop AutoRegisterPlayer true
 	@within AnimationsClient
 
-	If set to true, makes helpful prints about the time it takes to pre-load and load animations.
+	If set to true, the client will be auto registered with [`rigType`](/api/AnimationIds#rigType) of **"Player"** each time they spawn.
+
+	:::tip *added in version 2.6.0*
+	:::
 ]=]
-AnimationsClient.TimeToLoadPrints = true
+AnimationsClient.AutoRegisterPlayer = true
+
+--[=[
+	@prop BootstrapDepsFolder nil
+	@within AnimationsClient
+
+	Set the to the dependencies folder if you have moved it from its original location inside of the root `Animations` folder.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+
+	:::caution *changed in version 2.6.0*
+	Deprecated `DepsFolderPath`
+	:::
+]=]
+AnimationsClient.BootstrapDepsFolder = nil
 
 --[=[
 	@prop EnableAutoCustomRBXAnimationIds false
@@ -110,6 +118,14 @@ AnimationsClient.TimeToLoadPrints = true
 	:::
 ]=]
 AnimationsClient.EnableAutoCustomRBXAnimationIds = false
+
+--[=[
+	@prop TimeToLoadPrints true
+	@within AnimationsClient
+
+	If set to true, makes helpful prints about the time it takes to pre-load and load animations.
+]=]
+AnimationsClient.TimeToLoadPrints = true
 
 --[=[
 	@prop AnimatedObjectsDebugMode false
@@ -142,10 +158,12 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 	local function bootstrapDepsFolder()
 		local depsFolder
 
-		if self.DepsFolderPath then
+		if self.DepsFolderPath then -- Maintain for backwards compatability
 			local ok
 			ok, depsFolder = pcall(ChildFromPath, game, self.DepsFolderPath)
 			assert(ok and depsFolder, "No animation deps folder found at path '" .. self.DepsFolderPath .. "'")
+		elseif self.BootstrapDepsFolder then
+			depsFolder = self.BootstrapDepsFolder
 		else
 			depsFolder = script.Parent.Parent.Deps
 		end
@@ -205,7 +223,9 @@ function AnimationsClient:Init(initOptions: AnimationsClientInitOptionsType?)
 
 	local function initOnPlayerSpawn()
 		local function onCharacterAdded(char)
-			self:Register("Player")
+			if self.AutoRegisterPlayer then
+				self:Register("Player")
+			end
 
 			if self.AutoLoadAllPlayerTracks then
 				self:LoadAllTracks()

@@ -1040,6 +1040,10 @@ function AnimationsClass:Register(player_or_rig: Player | Model, rigType: string
 
 				if animatedObjectInfo.AnimatedObjectSettings.AutoDetach then
 					track.Stopped:Once(function()
+						if not rig:IsDescendantOf(game) then
+							return
+						end
+
 						if self.AnimatedObjectsDebugMode then
 							print(`[ANIM_OBJ_DEBUG] Animation track [ {track.Animation.AnimationId:match("%d.*")} ] stopped on rig [ {rig:GetFullName()} ]`)
 						end

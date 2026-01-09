@@ -16,12 +16,13 @@ local AutoCustomRBXAnimationIds = nil
 	@interface initOptions
 	@within AnimationsServer
 	.AutoLoadAllPlayerTracks false
-	.TimeToLoadPrints false
+	.AutoRegisterPlayers true
+	.BootstrapDepsFolder Folder?
 	.EnableAutoCustomRBXAnimationIds false
+	.TimeToLoadPrints false
 	.AnimatedObjectsDebugMode false
-	.DepsFolderPath string? -- Only use if you've moved the 'Deps' folder from its original location.
 
-	Gets applied to [`Properties`](#properties).
+	For more info, see [`Properties`](/api/AnimationsServer/#properties).
 ]=]
 type AnimationsServerInitOptionsType = Types.AnimationsServerInitOptionsType
 
@@ -59,17 +60,6 @@ local Animations = AnimationsClass.new(script.Name)
 local AnimationsServer = Animations
 
 --[=[
-	@prop DepsFolderPath nil
-	@within AnimationsServer
-
-	Set the path to the dependencies folder if you have moved it from its original location inside of the root `Animations` folder.
-
-	:::tip *added in version 2.0.0-rc1*
-	:::
-]=]
-AnimationsServer.DepsFolderPath = nil
-
---[=[
 	@prop AutoLoadAllPlayerTracks false
 	@within AnimationsServer
 
@@ -86,6 +76,40 @@ AnimationsServer.DepsFolderPath = nil
 AnimationsServer.AutoLoadAllPlayerTracks = false
 
 --[=[
+	@prop AutoRegisterPlayers true
+	@within AnimationsServer
+
+	If set to true, all player characters will be auto registered with [`rigType`](/api/AnimationIds#rigType) of **"Player"** when they spawn.
+
+	:::tip *added in version 2.6.0*
+	:::
+]=]
+AnimationsServer.AutoRegisterPlayers = true
+
+--[=[
+	@prop BootstrapDepsFolder nil
+	@within AnimationsServer
+
+	Set the to the dependencies folder if you have moved it from its original location inside of the root `Animations` folder.
+
+	:::tip *added in version 2.0.0-rc1*
+	:::
+
+	:::caution *changed in version 2.6.0*
+	Deprecated `DepsFolderPath`
+	:::
+]=]
+AnimationsServer.BootstrapDepsFolder = nil
+
+--[=[
+	@prop EnableAutoCustomRBXAnimationIds false
+	@within AnimationsServer
+
+	If set to true, applies the [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) module table to each player character on spawn.
+]=]
+AnimationsServer.EnableAutoCustomRBXAnimationIds = false
+
+--[=[
 	@prop TimeToLoadPrints true
 	@within AnimationsServer
 
@@ -96,14 +120,6 @@ AnimationsServer.AutoLoadAllPlayerTracks = false
 	:::
 ]=]
 AnimationsServer.TimeToLoadPrints = true
-
---[=[
-	@prop EnableAutoCustomRBXAnimationIds false
-	@within AnimationsServer
-
-	If set to true, applies the [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) module table to each player character on spawn.
-]=]
-AnimationsServer.EnableAutoCustomRBXAnimationIds = false
 
 --[=[
 	@prop AnimatedObjectsDebugMode false
@@ -135,10 +151,12 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	local function bootstrapDepsFolder()
 		local depsFolder
 		
-		if self.DepsFolderPath then
+		if self.DepsFolderPath then -- Maintain for backwards compatability
 			local ok
 			ok, depsFolder = pcall(ChildFromPath, game, self.DepsFolderPath)
 			assert(ok and depsFolder, "No animation deps folder found at path '" .. self.DepsFolderPath .. "'")
+		elseif self.BootstrapDepsFolder then
+			depsFolder = self.BootstrapDepsFolder
 		else
 			depsFolder = script.Parent.Parent.Deps
 		end
@@ -167,7 +185,9 @@ function AnimationsServer:Init(initOptions: AnimationsServerInitOptionsType?)
 	local function initOnPlayerSpawn()
 		local function onPlayerAdded(player)
 			local function onCharacterAdded(char)
-				self:Register(player, "Player")
+				if self.AutoRegisterPlayers then
+					self:Register(player, "Player")
+				end
 
 				if self.AutoLoadAllPlayerTracks then
 					self:LoadAllTracks(player)
