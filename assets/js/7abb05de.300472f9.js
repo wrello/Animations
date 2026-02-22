@@ -1,1 +1,0 @@
-"use strict";(self.webpackChunkdocs=self.webpackChunkdocs||[]).push([[971],{84410:s=>{s.exports=JSON.parse('{"sourceUrl":"https://github.com/wrello/Animations/blob/master","baseUrl":"/Animations/","classOrder":["AnimationsClient","AnimationsServer","AnimationIds","AutoCustomRBXAnimationIds"],"apiCategories":[]}')}}]);
