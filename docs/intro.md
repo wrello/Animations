@@ -21,7 +21,7 @@ If using a package manager, make sure to move the `Deps` folder somewhere safe a
 :::
 | |  |
 | ---          | --- |
-| Wally | `Animations = "wrello/animations@^3"` |
-| Pesde | `Animations = { name = "wrello/animations", version = "^3" }` |
+| Wally | `Animations = "wrello/animations@3.0.0"` |
+| Pesde | `Animations = { name = "wrello/animations", version = "3.0.0" }` |
 
 *Note: These versions may be out of date.*
