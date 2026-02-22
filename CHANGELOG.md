@@ -1,4 +1,4 @@
-## v3.0.0-simplification
+## v3.0.0
 > ###### 2/21/2026
 ----
 
@@ -46,9 +46,9 @@
 > ###### 5/28/2025
 ----
 - Enhancements
-    - Added [basic usage monster/npc tutorial](/docs/basic-usage-monster-npc)
+    - Added basic usage monster/npc tutorial
     - **[Beta]** Added [`AnimationsServer:EquipAnimatedTool()`](/api/AnimationsServer#EquipAnimatedTool). [Issue #73](https://github.com/wrello/Animations/issues/73)
-    - **[Beta]** You can now set a custom tool name(s) for "motor6d only" animated objects. Learn about this in the [animated objects tutorial](/docs/animated-objects#motor6d-only-toolname-module). [Issue #73](https://github.com/wrello/Animations/issues/73)
+    - **[Beta]** You can now set a custom tool name(s) for "motor6d only" animated objects. Learn about this in the animated objects tutorial. [Issue #73](https://github.com/wrello/Animations/issues/73)
     - Added an infinite yield warning if animator is not descendant of game for too long. [Issue #74](https://github.com/wrello/Animations/issues/74)
 - Changes (breaking)
     - **[Beta]** You can no longer use [`Animations:AttachAnimatedObject()`](/api/AnimationsServer#AttachAnimatedObject) with a single motor6d. This is because after equipping a tool with `humanoid:EquipTool()`, the tool will most likely not immediately be parented to the character ([Roblox quirk that is discussed here](https://devforum.roblox.com/t/tools-new-parent-is-delayed-when-using-humanoidequiptool-potential-studio-bug/3667271)), so [`Animations:AttachAnimatedObject()`](/api/AnimationsServer#AttachAnimatedObject) will fail to attach the motor6d.
@@ -129,7 +129,7 @@ Animations/ (new)
 
 ----
 
-[Migrate to v2.0.0 guide](/docs/migrate-to-2.0.0)
+Migrate to v2.0.0 guide
 
 - Changes (breaking)
     - Changed init option ~~`Animations.AutoLoadPlayerTracks`~~ -> to -> [`Animations.AutoLoadAllPlayerTracks`](/api/AnimationsServer/#AutoLoadAllPlayerTracks) in order to match the new [`Animations:LoadAllTracks()`](/api/AnimationsServer/#LoadAllTracks). [Issue #43](https://github.com/wrello/Animations/issues/43)
@@ -167,7 +167,7 @@ Animations/ (new)
 - Enhancements
     - Added [`Animations:StopAllTracks()`](/api/AnimationsServer/#StopAllTracks). [Issue #39](https://github.com/wrello/Animations/issues/39)
     - Added [`Animations:GetAnimationProfile()`](/api/AnimationsServer/#GetAnimationProfile). [Issue #29](https://github.com/wrello/Animations/issues/29)
-    - Added information on the all too common [`"Animator.EvaluationThrottled"`](/docs/animator-error) error. [Issue #38](https://github.com/wrello/Animations/issues/38)
+    - Added information on the all too common `"Animator.EvaluationThrottled"` error. [Issue #38](https://github.com/wrello/Animations/issues/38)
     - Added R6/R15 NPC support for [`Animations:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer/#ApplyCustomRBXAnimationIds) and [`Animations:ApplyAnimationProfile()`](/api/AnimationsServer/#ApplyAnimationProfile) on client & server. There are caveats when using these, be sure to read documentation. [Issue #41](https://github.com/wrello/Animations/issues/41)
     - Added more clear usage description of [`animation profiles`](/docs/animation-profiles). [Issue #34](https://github.com/wrello/Animations/issues/34)
     - **[Beta]** Added optional parameter `DoUnpack?` for [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject).
@@ -178,7 +178,7 @@ Animations/ (new)
     - **[Beta]** Changed [`HasAnimatedObject()`](/api/AnimationIds/#HasAnimatedObject) to no longer require a `RunContext` in `autoAttachDetachSettings?` (which is now `animatedObjectSettings`). It will now automatically run on client & server. [Issue #31](https://github.com/wrello/Animations/issues/31)
 - Fixes
     - Fixed memory leak associated with trusting that the `Player.Character.Destroying` event would fire when a character model got removed from the game.
-    - Fixed [`"Animator.EvaluationThrottled"`](/docs/animator-error) error caused by [`Animations.TimeToLoadPrints`](/api/AnimationsServer/#initOptions).
+    - Fixed `"Animator.EvaluationThrottled"` error caused by [`Animations.TimeToLoadPrints`](/api/AnimationsServer/#initOptions).
     - Fixed problem with string paths involving utility function `GetChildFromPath()`. [Issue #40](https://github.com/wrello/Animations/issues/40) 
     - Fixed auto detach of animated objects being bugged. [Issue #36](https://github.com/wrello/Animations/issues/36)
     - Fixed right grip weld not getting disabled for multiple animated object equips. [Issue #30](https://github.com/wrello/Animations/issues/30)
@@ -216,7 +216,7 @@ Animations/ (new)
 ----
 
 - Enhancements
-    - **[Beta]** Added [`Animations:AttachAnimatedObject()`](/api/AnimationsServer/#AttachAnimatedObject), [`Animations:DetachAnimatedObject()`](/api/AnimationsServer/#DetachAnimatedObject) methods, [`HasAnimatedObject`](/api/AnimationIds/#HasAnimatedObject) function in the [`AnimationIds`](/api/AnimationIds) module, and an [animated objects tutorial](/docs/animated-objects). [Issue #15](https://github.com/wrello/Animations/issues/15)
+    - **[Beta]** Added [`Animations:AttachAnimatedObject()`](/api/AnimationsServer/#AttachAnimatedObject), [`Animations:DetachAnimatedObject()`](/api/AnimationsServer/#DetachAnimatedObject) methods, [`HasAnimatedObject`](/api/AnimationIds/#HasAnimatedObject) function in the [`AnimationIds`](/api/AnimationIds) module, and an animated objects tutorial. [Issue #15](https://github.com/wrello/Animations/issues/15)
     - Added a tip that `"walk"` is the animation id that is applied for `R6` characters and `"run"` is the animation id that is applied for `R15` characters when using [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`]. [Issue #20](https://github.com/wrello/Animations/issues/20)
 - Changes (non-breaking)
     - Changed `ASSET_ID_STR` to format an integer instead of a float. [Issue #19](https://github.com/wrello/Animations/issues/19)
