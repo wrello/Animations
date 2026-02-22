@@ -51,12 +51,13 @@ export type AnimationsServerType = {
 	SetTrackAlias: (self: AnimationsServerType, player_or_rig: Player | Model, alias: any, path: {any} | string) -> (),
 	RemoveTrackAlias: (self: AnimationsServerType, player_or_rig: Player | Model, alias: any) -> (),
 
-	AttachAnimatedObject: (self: AnimationsServerType, player_or_rig: Player | Model, animatedObjectPath: {any} | string) -> (),
-	DetachAnimatedObject: (self: AnimationsServerType, player_or_rig: Player | Model, animatedObjectPath: {any} | string) -> (),
+	AttachWithMotor6d: (self: AnimationsServerType, player_or_rig: Player | Model, model: Model | Tool, motor6dToClone: Motor6D?) -> (),
 
-	EquipAnimatedTool: (self: AnimationsServerType, player_or_rig: Player | Model, tool: Tool, motor6dName: string) -> (),
+	SetRightGripWeldEnabled: (self: AnimationsServerType, player_or_rig: Player | Model, isEnabled: boolean) -> (),
+	WaitForRightGripWeld: (self: AnimationsServerType, player_or_rig: Player | Model) -> Weld,
+	FindRightGripWeld: (self: AnimationsServerType, player_or_rig: Player | Model) -> Weld?,
 
-	ApplyCustomRBXAnimationIds: (self: AnimationsServerType, player_or_rig: Player | Model, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
+	ApplyCustomRBXAnimationIds: (self: AnimationsServerType, player_or_rig: Player | Model, humanoidRigTypeToCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
 
 	GetAppliedProfileName: (self: AnimationsServerType, player_or_rig: Player | Model) -> string?,
 	GetAnimationProfile: (self: AnimationsServerType, animationProfileName: string) -> HumanoidRigTypeToCustomRBXAnimationIdsType?,
@@ -103,7 +104,7 @@ export type AnimationsClientType = {
 	GetRigTrack: (self: AnimationsClientType, rig: Model, path: {any} | string) -> AnimationTrack?,
 
 	PlayTrack: (self: AnimationsClientType, path: {any} | string, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
-	PlayRigTrack: (self: AnimationsClientType, rig: Model, path: {any} | string,  fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
+	PlayRigTrack: (self: AnimationsClientType, rig: Model, path: {any} | string, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
 
 	StopTrack: (self: AnimationsClientType, path: {any} | string, fadeTime: number?) -> AnimationTrack,
 	StopRigTrack: (self: AnimationsClientType, rig: Model, path: {any} | string, fadeTime: number?) -> AnimationTrack,
@@ -124,7 +125,7 @@ export type AnimationsClientType = {
 	GetRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any) -> AnimationTrack?,
 
 	PlayTrackFromAlias: (self: AnimationsClientType, alias: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
-	PlayRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any,  fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
+	PlayRigTrackFromAlias: (self: AnimationsClientType, rig: Model, alias: any, fadeTime: number?, weight: number?, speed: number?) -> AnimationTrack,
 
 	GetTimeOfMarker: (self: AnimationsClientType, animTrack_or_IdString: AnimationTrack | string, markerName: string) -> number?,
 	GetAnimationIdString: (self: AnimationsClientType, rigType: string, path: {any} | string) -> string,
@@ -138,17 +139,19 @@ export type AnimationsClientType = {
 	RemoveTrackAlias: (self: AnimationsClientType, alias: any) -> (),
 	RemoveRigTrackAlias: (self: AnimationsClientType, rig: Model, alias: any) -> (),
 
-	AttachAnimatedObject: (self: AnimationsClientType, animatedObjectPath: {any} | string) -> (),
-	AttachRigAnimatedObject: (self: AnimationsClientType, rig: Model, animatedObjectPath: {any} | string) -> (),
+	AttachWithMotor6d: (self: AnimationsClientType, model: Model | Tool, motor6dToClone: Motor6D?) -> (),
+	AttachToRigWithMotor6d: (self: AnimationsClientType, rig: Model, model: Model | Tool, motor6dToClone: Motor6D?) -> (),
 
-	DetachAnimatedObject: (self: AnimationsClientType, animatedObjectPath: {any} | string) -> (),
-	DetachRigAnimatedObject: (self: AnimationsClientType, rig: Model, animatedObjectPath: {any} | string) -> (),
+	SetRightGripWeldEnabled: (self: AnimationsClientType, isEnabled: boolean) -> (),
+	WaitForRightGripWeld: (self: AnimationsClientType) -> Weld,
+	FindRightGripWeld: (self: AnimationsClientType) -> Weld?,
 
-	-- EquipAnimatedTool: (self: AnimationsClientType, tool: Tool, motor6dName: string) -> (),
-	EquipRigAnimatedTool: (self: AnimationsClientType, rig: Model, tool: Tool, motor6dName: string) -> (),
+	SetRigRightGripWeldEnabled: (self: AnimationsClientType, rig: Model, isEnabled: boolean) -> (),
+	WaitForRigRightGripWeld: (self: AnimationsClientType, rig: Model) -> Weld,
+	FindRigRightGripWeld: (self: AnimationsClientType, rig: Model) -> Weld?,
 
-	ApplyCustomRBXAnimationIds: (self: AnimationsClientType, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
-	ApplyRigCustomRBXAnimationIds: (self: AnimationsClientType, rig: Model, humanoidRigTypeCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
+	ApplyCustomRBXAnimationIds: (self: AnimationsClientType, humanoidRigTypeToCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
+	ApplyRigCustomRBXAnimationIds: (self: AnimationsClientType, rig: Model, humanoidRigTypeToCustomRBXAnimationIds: HumanoidRigTypeToCustomRBXAnimationIdsType) -> (),
 
 	GetAppliedProfileName: (self: AnimationsClientType) -> string?,
 	GetRigAppliedProfileName: (self: AnimationsClientType, rig: Model) -> string?,
@@ -188,8 +191,6 @@ type AnimationsSharedInitOptionsType = {
 	BootstrapDepsFolder: Folder?,
 	AutoLoadAllPlayerTracks: boolean?,
 	TimeToLoadPrints: boolean?,
-	AnimatedObjectsDebugMode: boolean?,
-	EnableAutoCustomRBXAnimationIds: boolean?
 }
 export type AnimationsClientInitOptionsType = {
 	AutoRegisterPlayer: boolean?

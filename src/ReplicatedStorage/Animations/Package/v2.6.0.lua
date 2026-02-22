@@ -1,2 +1,0 @@
--- Github: https://github.com/wrello/Animations
--- DevForum: https://devforum.roblox.com/2504740

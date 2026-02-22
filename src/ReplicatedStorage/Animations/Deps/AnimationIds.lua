@@ -1,8 +1,28 @@
-local Types = require(script.Parent.Parent.Package.Util.Types)
-local AnimationIdsUtil = require(script.Parent.Parent.Package.Util.AnimationIdsUtil)
+local function HasProperties(
+	animationId: number | {},
+	propertiesSettings: {
+		Priority: Enum.AnimationPriority?,
+		Looped: boolean?,
+		StartSpeed: number?,
+		MarkerTimes: boolean?,
+		DoUnpack: boolean?
+	}
+): {}
+	local doUnpack = propertiesSettings.DoUnpack
+	propertiesSettings.DoUnpack = nil
 
-local HasAnimatedObject = AnimationIdsUtil.HasAnimatedObject
-local HasProperties = AnimationIdsUtil.HasProperties
+	if type(animationId) == "table" then
+		animationId._doUnpack = doUnpack
+		animationId._runtimeProps = propertiesSettings
+
+		return animationId
+	else
+		return {
+			_runtimeProps = propertiesSettings,
+			_singleAnimationId = animationId
+		}
+	end
+end
 
 --[=[
 	@type rigType string
@@ -12,7 +32,7 @@ local HasProperties = AnimationIdsUtil.HasProperties
 
 	```lua
 	local AnimationIds = {
-		Player = { -- `rigType` of "Player"
+		Player = { -- rigType of "Player"
 			Dodge = {
 				[Enum.KeyCode.W] = 0000000,
 				[Enum.KeyCode.S] = 0000000,
@@ -27,7 +47,7 @@ local HasProperties = AnimationIdsUtil.HasProperties
 	```
 
 	:::info
-	The only preset `rigType` is that of **"Player"** for all player/client animation ids.
+	The only preset `rigType` is that of `"Player"` for all player animation ids.
 	:::
 ]=]
 
@@ -50,22 +70,11 @@ local HasProperties = AnimationIdsUtil.HasProperties
 	.StartSpeed number? -- Auto set animation speed through [`Animations:PlayTrack()`](/api/AnimationsServer#PlayTrack) related methods
 	.DoUnpack boolean? -- Set the key-value pairs of [`animationId`](#HasProperties) (if it's a table) *in the parent table*
 	.MarkerTimes boolean? -- Support [`Animations:GetTimeOfMarker()`](/api/AnimationsServer#GetTimeOfMarker)
-
-	:::caution *changed in version 2.1.0*
-	Added `MarkerTimes` property	
-	:::
-	
-	:::caution *changed in version 2.3.0*
-	Added `StartSpeed` property
-	:::
 ]=]
 
 --[=[
 	@type HasProperties (animationId: idTable, propertiesSettings: propertiesSettings): {}
 	@within AnimationIds
-
-	:::tip *added in version 2.0.0*
-	:::
 
 	```lua
 	local AnimationIds = {
@@ -99,57 +108,6 @@ local HasProperties = AnimationIdsUtil.HasProperties
 		},
 	}
 	```
-]=]
-
---[=[
-	@interface animatedObjectSettings
-	@within AnimationIds
-	.AutoAttach boolean?
-	.AutoDetach boolean?
-	.DoUnpack boolean? -- Set the key-value pairs of [`animationId`](#HasAnimatedObject) (if it's a table) *in the parent table*
-]=]
-
---[=[
-	@tag Beta
-	@type HasAnimatedObject (animationId: idTable, animatedObjectPath: path, animatedObjectSettings: animatedObjectSettings): {}
-	@within AnimationIds
-
-	```lua
-	local AnimationIds = {
-		Player = { -- `rigType` of "Player"
-			Dodge = {
-				[Enum.KeyCode.W] = 0000000,
-				[Enum.KeyCode.S] = 0000000,
-				[Enum.KeyCode.A] = 0000000,
-				[Enum.KeyCode.D] = 0000000,
-			},
-			Run = 0000000,
-			Walk = 0000000,
-			Idle = 0000000,
-			Sword = {
-				-- Now when the "Sword.Walk" animation plays "Sword" will
-				-- auto attach to the player and get animated
-				Walk = HasAnimatedObject(0000000, "Sword", { AutoAttach = true })
-
-				Idle = 0000000,
-				Run = 0000000,
-
-				-- Now when {"Sword", "AttackCombo", 1 or 2 or 3} animation
-				-- plays "Sword" will auto attach to the player and get
-				-- animated
-				AttackCombo = HasAnimatedObject({
-					[1] = 0000000,
-					[2] = 0000000,
-					[3] = 0000000
-				}, "Sword", { AutoAttach = true })
-			}
-		},
-	}
-	```
-
-	:::info
-	For more information on setting up animated objects check out [animated objects tutorial](/docs/animated-objects).
-	:::
 ]=]
 
 --[=[
@@ -201,11 +159,13 @@ local HasProperties = AnimationIdsUtil.HasProperties
 	@class AnimationIds
 
 	:::note
-	Roblox model path: `Animations.Deps.AnimationIds`
+	Roblox model path: `Animations\Deps\AnimationIds`
 	:::
 ]=]
 local AnimationIds = {
-
+	Player = {
+		
+	}
 }
 
-return AnimationIds :: Types.AnimationIdsType
+return AnimationIds

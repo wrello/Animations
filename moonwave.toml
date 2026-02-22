@@ -6,8 +6,7 @@ changelog = true
 classOrder = [
     "AnimationsClient",
     "AnimationsServer",
-    "AnimationIds",
-    "AutoCustomRBXAnimationIds"
+    "AnimationIds"
 ]
 
 [home]

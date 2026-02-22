@@ -1,3 +1,21 @@
+## v3.0.0-simplification
+> ###### 2/21/2026
+----
+
+- Changes (breaking)
+    - Removed `AutoCustomRBXAnimationIds` related API because it can be done with an animation profile and an on player added event.
+    - Replaced all animated object API/docs with two functions: 
+        - [`Animations:AttachWithMotor6d()`](/api/AnimationsServer#AttachWithMotor6d) - to attach models to a character with a `motor6d`
+        - [`Animations:SetRightGripWeldEnabled()`](/api/AnimationsServer#SetRightGripWeldEnabled) - and to disable/enable the character's `RightGrip` weld in case that model is a tool
+    - Removed deprecated `DepsFolderPath`
+- Ehancements
+    - Massive documentation improvements/debloating
+    - Added entry in [`AnimationIds`](/api/AnimationIds) of required `"Player"` rig type for auto player registration (which is enabled by default)
+- Fixes
+    - Fixed an infinite yield that occurred if no animations were in the [`AnimationIds`](/api/AnimationIds) module
+    - Fixed the deps folder being moved breaking require paths
+    - Fixed a bug with [`HasProperties`](/api/AnimationIds#HasProperties) not applying for complex edge case
+
 ## v2.6.0
 > ###### 1/9/2026
 ----
@@ -7,7 +25,7 @@
 - Changes (non-breaking)
     - Changed `Animations.DepsFolderPath` (deprecated, will be removed in a future major version) to [`Animations.BootstrapDepsFolder`](/api/AnimationsServer#BootstrapDepsFolder) which just takes the deps folder instance itself. [Issue #79](https://github.com/wrello/Animations/issues/79)
 - Fixes
-    - Fixed an error that occured when auto detaching an animated object from a destroyed rig. [Issue #81](https://github.com/wrello/Animations/issues/81)
+    - Fixed an error that occurred when auto detaching an animated object from a destroyed rig. [Issue #81](https://github.com/wrello/Animations/issues/81)
     - Fixed `AnimationProfiles` and `AnimatedObjects` folders not showing up on GitHub due to being empty. [Issue #80](https://github.com/wrello/Animations/issues/80)
 
 ## v2.5.1
@@ -100,7 +118,7 @@ Animations/ (new)
     - Added [`HasProperties()`](/api/AnimationIds/#HasProperties) function in [`AnimationIds`](/api/AnimationIds) module. [Issue #54](https://github.com/wrello/Animations/issues/54)
     - Added [`Animations:GetAppliedProfileName()`](/api/AnimationsServer/#GetAppliedProfileName). [Issue #53](https://github.com/wrello/Animations/issues/53)
 - Fixes
-    - Fixed [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) not working. [Issue #55](https://github.com/wrello/Animations/issues/55)
+    - Fixed [`AutoCustomRBXAnimationIds`] not working. [Issue #55](https://github.com/wrello/Animations/issues/55)
     - Fixed waiting for `player.CharacterAdded` event that might never happen if `Players.CharacterAutoLoads` is disabled. [Issue #52](https://github.com/wrello/Animations/issues/52)
     - Fixed "Cannot load the AnimationClipProvider Service" error/bug. [Issue #51](https://github.com/wrello/Animations/issues/51)
     - Fixed documentation issues. [Issue #49](https://github.com/wrello/Animations/issues/49), [Issue #50](https://github.com/wrello/Animations/issues/50)
@@ -127,7 +145,7 @@ Animations/ (new)
     - Added event [`Animations.PreloadAsyncProgressed`](/api/AnimationsServer/#PreloadAsyncProgressed).
     - Added init option [`Animations.DepsFolderPath`](/api/AnimationsServer/#DepsFolderPath). [Issue #46](https://github.com/wrello/Animations/issues/46)
     - Added [`Animations:GetPlayingTracks()`](/api/AnimationsServer/#GetPlayingTracks). [Issue #42](https://github.com/wrello/Animations/issues/42)
-    - Added init option [`AnimationsClient.EnableAutoCustomRBXAnimationIds`](/api/AnimationsClient/#EnableAutoCustomRBXAnimationIds).
+    - Added init option [`AnimationsClient.EnableAutoCustomRBXAnimationIds`].
     - Added init option [`AnimationsClient.AutoRegisterPlayer`](/api/AnimationsClient/#AutoRegisterPlayer)/[`AnimationsServer.AutoRegisterPlayers`](/api/AnimationsServer/#AutoRegisterPlayers). [Issue #43](https://github.com/wrello/Animations/issues/43)
 - Changes (non-breaking)
     - Changed init option [`AnimationsServer.TimeToLoadPrints`](/api/AnimationsServer/#TimeToLoadPrints) to default to `true` because it's important to realize that initialization can yield for quite some time during `ContentProvider:PreloadAsync()` on all animations in the [`AnimationIds`](/api/AnimationIds) module. [Issue #44](https://github.com/wrello/Animations/issues/44)
@@ -199,13 +217,13 @@ Animations/ (new)
 
 - Enhancements
     - **[Beta]** Added [`Animations:AttachAnimatedObject()`](/api/AnimationsServer/#AttachAnimatedObject), [`Animations:DetachAnimatedObject()`](/api/AnimationsServer/#DetachAnimatedObject) methods, [`HasAnimatedObject`](/api/AnimationIds/#HasAnimatedObject) function in the [`AnimationIds`](/api/AnimationIds) module, and an [animated objects tutorial](/docs/animated-objects). [Issue #15](https://github.com/wrello/Animations/issues/15)
-    - Added a tip that `"walk"` is the animation id that is applied for `R6` characters and `"run"` is the animation id that is applied for `R15` characters when using [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds). [Issue #20](https://github.com/wrello/Animations/issues/20)
+    - Added a tip that `"walk"` is the animation id that is applied for `R6` characters and `"run"` is the animation id that is applied for `R15` characters when using [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`]. [Issue #20](https://github.com/wrello/Animations/issues/20)
 - Changes (non-breaking)
     - Changed `ASSET_ID_STR` to format an integer instead of a float. [Issue #19](https://github.com/wrello/Animations/issues/19)
 - Fixes
     - Fixed lots of documentation and typing errors, especially related to `CustomRBXAnimationIds` which is now [`humanoidRigTypeToCustomRBXAnimationIds`](/api/AnimationsServer/#humanoidRigTypeToCustomRBXAnimationIds).
-    - Fixed [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds) not working. [Issue #18](https://github.com/wrello/Animations/issues/18)
-    - Fixed bad type annotation for [`AutoCustomRBXAnimationIds`](/api/AutoCustomRBXAnimationIds). [Issue #16](https://github.com/wrello/Animations/issues/16)
+    - Fixed [`AnimationsServer:ApplyCustomRBXAnimationIds()`](/api/AnimationsServer#ApplyCustomRBXAnimationIds) and [`AutoCustomRBXAnimationIds`] not working. [Issue #18](https://github.com/wrello/Animations/issues/18)
+    - Fixed bad type annotation for [`AutoCustomRBXAnimationIds`]. [Issue #16](https://github.com/wrello/Animations/issues/16)
 
 ## v1.0.5
 > ###### 1/31/2024

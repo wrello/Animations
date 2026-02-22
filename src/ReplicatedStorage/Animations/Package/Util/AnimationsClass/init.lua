@@ -13,12 +13,9 @@ local CustomAssert = require(script.Parent.CustomAssert)
 local Zip = require(script.Parent.Zip)
 local Queue = require(script.Parent.Queue)
 local Types = require(script.Parent.Parent.Util.Types)
-local AnimatedObject = require(script.AnimatedObject)
-local AnimatedObjectsCache = require(script.AnimatedObjectsCache)
 local GetAttributeAsync = require(script.Parent.Parent.Util.GetAttributeAsync)
 
 local ANIM_ID_STR = "rbxassetid://%i"
-local ANIMATED_OBJECT_INFO_ARR_STR = "animated object info array"
 
 local RAN_FULL_METHOD = {
 	Yes = true,
@@ -36,7 +33,6 @@ getmetatable(ALL_ANIMS_MARKER).__tostring = function()
 end
 
 local AnimationIds = nil
-local animatedObjectsFolder = nil
 local animationProfiles = nil
 
 local allMarkerTimes = {}
@@ -97,14 +93,6 @@ local function getAnimator(player_or_rig, rig)
 	CustomAssert(animator, "No animator found [", rig:GetFullName(), "]")
 
 	return animator
-end
-
-local function isAnimatedObjectInfoArray(v)
-	return getmetatable(v) == ANIMATED_OBJECT_INFO_ARR_STR
-end
-
-local function createAnimatedObjectInfoArray()
-	return setmetatable({}, { __metatable = ANIMATED_OBJECT_INFO_ARR_STR })
 end
 
 local function getAnimIdNumber(animIdString)
@@ -201,7 +189,6 @@ end
 
 function AnimationsClass:_bootstrapDepsFolder(depsFolder)
 	AnimationIds = require(depsFolder.AnimationIds)
-	animatedObjectsFolder = depsFolder.AnimatedObjects
 	animationProfiles = Zip.children(depsFolder.AnimationProfiles)
 end
 
@@ -219,49 +206,27 @@ function AnimationsClass:_animationIdsToInstances()
 		end
 	end
 
-	local function mapAnimationInstanceToAnimatedObjectInfo(animationInstance, newAnimatedObjectInfo)
-		local oldAnimatedObjectInfo = self.AnimationInstanceToAnimatedObjectInfo[animationInstance]
-
-		if oldAnimatedObjectInfo ~= nil then -- Allow multiple animated objects to be attached to the same animation
-			if isAnimatedObjectInfoArray(oldAnimatedObjectInfo) then
-				local animatedObjectInfoArray = oldAnimatedObjectInfo
-
-				table.insert(animatedObjectInfoArray, newAnimatedObjectInfo)
-			else
-				local animatedObjectInfoArray = createAnimatedObjectInfoArray()
-
-				table.insert(animatedObjectInfoArray, oldAnimatedObjectInfo)
-				table.insert(animatedObjectInfoArray, newAnimatedObjectInfo)
-
-				self.AnimationInstanceToAnimatedObjectInfo[animationInstance] = animatedObjectInfoArray
-			end
-		else
-			self.AnimationInstanceToAnimatedObjectInfo[animationInstance] = newAnimatedObjectInfo
-		end
-	end
-
 	local function initializeAnimationIds(idTable, state)
 		for animationIndex, animationId in pairs(idTable) do
 			local type = type(animationId)
 			local newAnimationInstance = nil
+
+			local runtimePropsToApply = state.runtimeProps -- Save now before 'state' gets modified by further recursions
 
 			if type == "table" then
 				if animationId._singleAnimationId then
 					newAnimationInstance = self:_createAnimationInstance(animationIndex, animationId._singleAnimationId)
 
 					if animationId._runtimeProps then
-						state.runtimeProps = animationId._runtimeProps
-					elseif animationId._animatedObjectInfo then
-						state.animatedObjectInfo = animationId._animatedObjectInfo
+						runtimePropsToApply = animationId._runtimeProps
 					end
 				else
 					local nextIdTable = animationId -- We are inside of a normal id table
 
-					-- Moving all keys out of the table sent to
-					-- `HasAnimatedObject` and `HasProperties` functions and up
-					-- one level. Need a queue for this because we still need it
-					-- to happen from top down, but after all animations are
-					-- loaded.
+					-- Moving all keys out of the table sent to `HasProperties`
+					-- functions and up one level. Need a queue for this because
+					-- we still need it to happen from top down, but after all
+					-- animations are loaded.
 					local doUnpack = nextIdTable._doUnpack
 					nextIdTable._doUnpack = nil
 					if doUnpack then
@@ -276,19 +241,11 @@ function AnimationsClass:_animationIdsToInstances()
 
 					-- First replace all descendant animation ids within
 					-- `nextIdTable` with { _singleAnimation and _runtimeProps }
+					
 					local runtimeProps = nextIdTable._runtimeProps
 					nextIdTable._runtimeProps = nil
 					if runtimeProps then
 						state.runtimeProps = runtimeProps
-					end
-
-					-- Then map all descendant animation instances (or ids ->
-					-- instances) within `nextIdTable` to their animated object
-					-- infos
-					local animatedObjectInfo = nextIdTable._animatedObjectInfo
-					nextIdTable._animatedObjectInfo = nil
-					if animatedObjectInfo then
-						state.animatedObjectInfo = animatedObjectInfo
 					end
 
 					-- CONTINUE RECURSION | AFTER CONFIGURING STATE FOR DESCENDANT ANIMATION IDS
@@ -301,19 +258,14 @@ function AnimationsClass:_animationIdsToInstances()
 				continue
 			end
 
-			if state.animatedObjectInfo then
-				mapAnimationInstanceToAnimatedObjectInfo(newAnimationInstance, state.animatedObjectInfo)
-			end
-
-			local runtimeProps = state.runtimeProps
-			if runtimeProps then
-				if runtimeProps.MarkerTimes then -- Cache animation marker times for this animation
-					runtimeProps.MarkerTimes = nil
+			if runtimePropsToApply then
+				if runtimePropsToApply.MarkerTimes then -- Cache animation marker times for this animation
+					runtimePropsToApply.MarkerTimes = nil
 					self:_cacheAnimationMarkerTimes(newAnimationInstance.AnimationId)
 				end
 
 				idTable[animationIndex] = {
-					_runtimeProps = runtimeProps,
+					_runtimeProps = runtimePropsToApply,
 					_singleAnimation = newAnimationInstance
 				}
 			else
@@ -326,6 +278,9 @@ function AnimationsClass:_animationIdsToInstances()
 
 	local function preloadAsync()
 		local len = #self._preloadAsyncArray
+		if len == 0 then
+			return
+		end
 
 		local loaded = 0
 		for i, animation in ipairs(self._preloadAsyncArray) do
@@ -359,8 +314,12 @@ function AnimationsClass:_animationIdsToInstances()
 
 		initializeAnimationIds(idTable, {})
 	end
+	
 
 	unpackQueueDoAll()
+	
+	print(AnimationIds)
+	
 	preloadAsync()
 
 	if self.TimeToLoadPrints then
@@ -382,7 +341,6 @@ function AnimationsClass.new(moduleName)
 	self.PreloadAsyncFinishedSignal = Signal.new()
 	self.FinishedLoadingSignal = Signal.new()
 	self.RegisteredRigSignal = Signal.new()
-	self.AnimationInstanceToAnimatedObjectInfo = {}
 	self.AnimationInstancesCache = {}
 
 	self.Aliases = {} -- Per player and npc rig
@@ -392,11 +350,10 @@ function AnimationsClass.new(moduleName)
 	}
 
 	self.PerRig = {
+		OnDestroyedConnection = {},
+		RightGripDisabledCount = {},
 		AppliedProfile = {},
-		TrackToAnimatedObjectInfo = {},
 		LoadedTracks = {},
-		Connections = {},
-		AnimatedObjectsCache = {},
 		IsRegistered = {},
 	}
 
@@ -519,85 +476,6 @@ end
 
 function AnimationsClass:_removeTrackAlias(player_or_rig, alias)
 	self.Aliases[player_or_rig][alias] = nil
-end
-
-function AnimationsClass:_attachDetachAnimatedObject(attach_detach, player_or_rig, animatedObjectPath, animatedObjectInfo, toolToEquip)
-	CustomAssert(animatedObjectPath ~= nil, "Path is nil")
-
-	local rig = getRig(player_or_rig)
-	self:_rigRegisteredAssertion(rig, "unable to", attach_detach, "animated object [", animatedObjectPath, "]")
-
-	local animatedObjectsCache = self.PerRig.AnimatedObjectsCache[rig]
-
-	if attach_detach == "detach" then
-		local animatedObjectTable = animatedObjectsCache:Get(animatedObjectPath)
-
-		if not animatedObjectTable then
-			if self.AnimatedObjectsDebugMode then
-				print("[ANIM_OBJ_DEBUG] Unable to detach animated object - no attached animated objects found under path [", animatedObjectPath, "]")
-			end
-			return
-		end
-
-		animatedObjectTable:Detach()
-	elseif attach_detach == "attach" then
-		local ok, animatedObjectSrc = pcall(ChildFromPath, animatedObjectsFolder, animatedObjectPath)
-		CustomAssert(ok, "Unable to attach animated object to [", rig:GetFullName(), "] - no animated objects found under path [", animatedObjectPath, "]")
-
-		if toolToEquip then
-			if RunService:IsServer() then
-				if isPlayer(player_or_rig) then
-					CustomAssert(toolToEquip:IsDescendantOf(game), "Unable to equip animated tool to [", rig:GetFullName(), "] - tool [", toolToEquip:GetFullName(), "] must be a descendant of the game")
-				end
-
-				rig.Humanoid:EquipTool(toolToEquip) -- Need to do this before 'animatedObjectsCache:Get(animatedObjectPath)' below because this unequips the current tools which will potentially uncache an animated object with the same motor6d name allowing us to continue past it
-			elseif RunService:IsClient() then
-				-- if isPlayer(player_or_rig) then
-				-- 	local client = player_or_rig
-				-- 	CustomAssert(toolToEquip.Parent == client.Backpack or toolToEquip.Parent == rig, "Unable to equip animated tool to [", rig:GetFullName(), "] - tool [", toolToEquip:GetFullName(), "] must be in client's backpack or character")
-					
-				-- 	rig.Humanoid:EquipTool(toolToEquip) -- Need to do this before 'animatedObjectsCache:Get(animatedObjectPath)' below because this unequips the current tools which will potentially uncache an animated object with the same motor6d name allowing us to continue past it
-				-- else
-					customClientNPCEquipTool(rig, toolToEquip) -- Need to do this before 'animatedObjectsCache:Get(animatedObjectPath)' below because this unequips the current tools which will potentially uncache an animated object with the same motor6d name allowing us to continue past it
-				-- end
-			end
-		else
-			local isAutoAttaching = animatedObjectInfo
-			local motor6dOnly = animatedObjectSrc.ClassName == "Motor6D" and not isAutoAttaching
-			if RunService:IsServer() then
-				CustomAssert(not motor6dOnly, "Unable to attach animated object to [", rig:GetFullName(), "] - attaching single motor6d could fail to find the equipped tool if directly after 'humanoid:EquipTool()'. Use 'Animations:EquipAnimatedTool()' instead.")
-			elseif RunService:IsClient() then
-				CustomAssert(not motor6dOnly, "Unable to attach animated object to [", rig:GetFullName(), "] - attaching single motor6d manually is not available on client. Use 'Animations:EquipAnimatedTool()' on server instead.")
-			end
-		end
-		
-		if animatedObjectsCache:Get(animatedObjectPath) then
-			if self.AnimatedObjectsDebugMode then
-				print("[ANIM_OBJ_DEBUG] Unable to attach animated object - attached animated object already found under path [", animatedObjectPath, "]")
-			end
-			return
-		end
-
-		local animatedObjectTable = AnimatedObject.new(rig, animatedObjectSrc, animatedObjectInfo, self.AnimatedObjectsDebugMode)
-
-		-- No need to error because if an animation id is auto attaching
-		-- multiple animated objects then one is bound to fail attaching
-		if not animatedObjectTable:Attach(toolToEquip) then
-			return
-		end
-
-		animatedObjectTable:ListenToDetach(function()
-			animatedObjectsCache:Remove(animatedObjectPath)
-		end)
-
-		animatedObjectsCache:Map(animatedObjectPath, animatedObjectTable)
-
-		if self.AnimatedObjectsDebugMode then
-			print(`[ANIM_OBJ_DEBUG] Cache after adding new {RunService:IsClient() and "client" or "server"} sided animated object`, animatedObjectsCache.Cache)
-		end
-
-		return true
-	end
 end
 
 function AnimationsClass:_editAnimateScriptValues(animator, animateScript, humRigTypeCustomRBXAnimationIds)
@@ -736,11 +614,6 @@ function AnimationsClass:_loadTracksAt(player_or_rig, path)
 		track.Name = animationInstance.Name
 
 		parent_id_table[animationName] = track
-
-		local animatedObjectInfo = self.AnimationInstanceToAnimatedObjectInfo[animationInstance]
-		if animatedObjectInfo then
-			self.PerRig.TrackToAnimatedObjectInfo[rig][animationInstance.AnimationId:match("%d+$")] = animatedObjectInfo
-		end
 
 		if runtimeProps then
 			if runtimeProps.Looped ~= nil then
@@ -925,16 +798,48 @@ function AnimationsClass:GetTrackStartSpeed(player_or_rig: Player | Model, path:
 	return self:_getTrack(player_or_rig, path):GetAttribute("StartSpeed")
 end
 
-function AnimationsClass:AttachAnimatedObject(player_or_rig: Player | Model, animatedObjectPath: {any} | string)
+function AnimationsClass:AttachWithMotor6d(player_or_rig: Player | Model, model: Model | Tool, motor6dToClone: Motor6D?)
 	self:_initializedAssertion()
+	
+	local rig = getRig(player_or_rig)
+	
+	-- The redudancy/order of everything below is intentional
 
-	self:_attachDetachAnimatedObject("attach", player_or_rig, animatedObjectPath)
+	local foundMotor6d = model:FindFirstChildWhichIsA("Motor6D")
+	
+	-- Check if need motor6dToClone
+	if not foundMotor6d then
+		CustomAssert(motor6dToClone, `No motor6d found inside the model [ {model:GetFullName()} ] for ':AttachWithMotor6d()'. You must provide a motor6d to clone from instead`)
+	end
+	
+	-- Check attributes
+	local v = foundMotor6d or motor6dToClone
+	local part0Name = v:GetAttribute("Part0Name")
+	local part1Name = v:GetAttribute("Part1Name")
+	CustomAssert(part0Name, `No "Part0Name" attribute set for motor6d [ {v:GetFullName()} ]`)
+	CustomAssert(part1Name, `No "Part1Name" attribute set for motor6d [ {v:GetFullName()} ]`)
+	
+	local finalMotor6d = foundMotor6d
+	if not foundMotor6d then
+		finalMotor6d = motor6dToClone:Clone()
+		finalMotor6d.Parent = model
+	end
+
+	finalMotor6d.Part0 = rig:FindFirstChild(part0Name, true)
+	finalMotor6d.Part1 = model:FindFirstChild(part1Name, true)
 end
 
-function AnimationsClass:DetachAnimatedObject(player_or_rig: Player | Model, animatedObjectPath: {any} | string)
+function AnimationsClass:SetRightGripWeldEnabled(player_or_rig: Player | Model, isEnabled: boolean)
 	self:_initializedAssertion()
+	
+	local rig = getRig(player_or_rig)
+	
+	local rightGripWeld = self:FindRightGripWeld(rig)
+	if not rightGripWeld or rightGripWeld.Enabled == isEnabled then
+		return
+	end
 
-	self:_attachDetachAnimatedObject("detach", player_or_rig, animatedObjectPath)
+	rightGripWeld.Enabled = isEnabled
 end
 
 function AnimationsClass:AreTracksLoadedAt(player_or_rig: Player | Model, path: {any} | string): boolean
@@ -947,6 +852,16 @@ function AnimationsClass:AreAllTracksLoaded(player_or_rig: Player | Model): bool
 	self:_initializedAssertion()
 
 	return not not self:_areTracksLoadedAt(player_or_rig, ALL_ANIMS_MARKER)
+end
+
+function AnimationsClass:WaitForRightGripWeld(player_or_rig: Player | Model): Weld
+	local rig = getRig(player_or_rig)
+	return (rig:FindFirstChild("Right Arm") or rig:FindFirstChild("RightArm"):FindFirstChild("RightHand")):WaitForChild("RightGrip")
+end
+
+function AnimationsClass:FindRightGripWeld(player_or_rig: Player | Model): Weld?
+	local rig = getRig(player_or_rig)
+	return (rig:FindFirstChild("Right Arm") or rig:FindFirstChild("RightArm"):FindFirstChild("RightHand")):FindFirstChild("RightGrip")
 end
 
 function AnimationsClass:AwaitTracksLoadedAt(player_or_rig: Player | Model, path: {any} | string): Types.RanFullMethodType
@@ -987,110 +902,6 @@ function AnimationsClass:Register(player_or_rig: Player | Model, rigType: string
 	local animationIdsToClone = AnimationIds[rigType]
 	CustomAssert(animationIdsToClone, "No animations found for [", player_or_rig:GetFullName(), "] under rig type [", rigType, "]")
 
-	local connections = {}
-	self.PerRig.Connections[rig] = connections
-
-	local animatedObjectsCache = AnimatedObjectsCache.new()
-	self.PerRig.AnimatedObjectsCache[rig] = animatedObjectsCache
-
-	-- Destroy the client-sided animated object clone when the server-sided one
-	-- gets added. We also destroy the server-sided one before the server does.
-	-- This makes for 0 latency when the player plays animations on their
-	-- character.
-	if RunService:IsClient() then
-		table.insert(connections, rig.ChildAdded:Connect(function(newChild)
-			local serverAnimatedObject = newChild
-			local serverAnimatedObjectPathType = serverAnimatedObject:GetAttribute(AnimatedObject.SERVER_ANIM_OBJ_AUTO_ATTACH_STR)
-
-			if serverAnimatedObjectPathType then
-				local serverAnimatedObjectPath =
-					if serverAnimatedObjectPathType == "string" then
-						serverAnimatedObject.Name
-					else
-						{serverAnimatedObject.Name}
-
-				local clientSidedAnimatedObject = animatedObjectsCache:Get(serverAnimatedObjectPath)
-
-				if clientSidedAnimatedObject then
-					clientSidedAnimatedObject:TransferToServerAnimatedObject(serverAnimatedObject)
-
-					if self.AnimatedObjectsDebugMode then
-						print("[ANIM_OBJ_DEBUG] Cache after transfering client sided animated object lifeline to server animated object", animatedObjectsCache.Cache)
-					end
-				end
-			end
-		end))
-	end
-
-	-- When a track gets played attach an animated object if required
-	table.insert(connections, getAnimator(player_or_rig, rig).AnimationPlayed:Connect(function(track)
-		if self.AnimatedObjectsDebugMode then
-			print(`[ANIM_OBJ_DEBUG] Animation track [ {track.Animation.AnimationId:match("%d.*")} ] played on rig [ {rig:GetFullName()} ]`)
-		end
-
-		local animatedObjectInfo = self.PerRig.TrackToAnimatedObjectInfo[rig][track.Animation.AnimationId:match("%d+$")]
-
-		if animatedObjectInfo then
-			local function tryAttach(animatedObjectInfo)
-				local isAttached = false
-
-				if animatedObjectInfo.AnimatedObjectSettings.AutoAttach then
-					isAttached = self:_attachDetachAnimatedObject("attach", player_or_rig, animatedObjectInfo.AnimatedObjectPath, animatedObjectInfo) -- Pass in `animatedObjectInfo` to indicate it was an auto attach
-				end
-
-				if animatedObjectInfo.AnimatedObjectSettings.AutoDetach then
-					track.Stopped:Once(function()
-						if not rig:IsDescendantOf(game) then
-							return
-						end
-
-						if self.AnimatedObjectsDebugMode then
-							print(`[ANIM_OBJ_DEBUG] Animation track [ {track.Animation.AnimationId:match("%d.*")} ] stopped on rig [ {rig:GetFullName()} ]`)
-						end
-
-						self:_attachDetachAnimatedObject("detach", player_or_rig, animatedObjectInfo.AnimatedObjectPath)
-					end)
-				end
-
-				return isAttached
-			end
-
-			if isAnimatedObjectInfoArray(animatedObjectInfo) then
-				local animatedObjectInfoArray = animatedObjectInfo
-
-				for _, animatedObjectInfo in animatedObjectInfoArray do -- Attaches the first associated animated object
-					if tryAttach(animatedObjectInfo) then
-						break
-					end
-				end
-			else
-				tryAttach(animatedObjectInfo)
-			end
-		end
-	end))
-
-	-- When the rig gets destroyed the animation tracks are no longer loaded
-	table.insert(connections, rig.AncestryChanged:Connect(function(_, newParent)
-		if newParent == nil then
-			for _, conn in ipairs(connections) do
-				conn:Disconnect()
-			end
-
-			clearTracks(self.PerRig.LoadedTracks[rig])
-
-			if not isPlayer then
-				self.Aliases[rig] = nil
-			end
-
-			self.PerRig.IsRegistered[rig] = nil
-			self.PerRig.Connections[rig] = nil
-			self.PerRig.LoadedTracks[rig] = nil
-			self.PerRig.AppliedProfile[rig] = nil
-			self.PerRig.AnimatedObjectsCache[rig] = nil
-			self.PerRig.TrackToAnimatedObjectInfo[rig] = nil
-		end
-	end))
-
 	-- Set an attribute for convenience's sake to determine a rig's "type"
 	rig:SetAttribute("AnimationsRigType", rigType)
 
@@ -1101,8 +912,24 @@ function AnimationsClass:Register(player_or_rig: Player | Model, rigType: string
 	else
 		self.Aliases[rig] = {}
 	end
+	
+	-- Cleanup on destroyed
+	self.PerRig.OnDestroyedConnection[rig] = rig.AncestryChanged:Connect(function(_, newParent)
+		if newParent == nil then
+			self.PerRig.OnDestroyedConnection[rig]:Disconnect()
 
-	self.PerRig.TrackToAnimatedObjectInfo[rig] = {}
+			clearTracks(self.PerRig.LoadedTracks[rig])
+
+			if not isPlayer then
+				self.Aliases[rig] = nil
+			end
+
+			for _, v in self.PerRig do
+				v[rig] = nil
+			end
+		end
+	end)
+
 	self.PerRig.LoadedTracks[rig] = deepClone(animationIdsToClone)
 	self.PerRig.IsRegistered[rig] = true
 	self.RegisteredRigSignal:Fire(rig)
