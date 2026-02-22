@@ -14,7 +14,7 @@
 - Fixes
     - Fixed an infinite yield that occurred if no animations were in the [`AnimationIds`](/api/AnimationIds) module
     - Fixed the deps folder being moved breaking require paths
-    - Fixed a bug with [`HasProperties`](/api/AnimationIds#HasProperties) not applying for complex edge case
+    - Fixed a bug with [`HasProperties`](/api/AnimationIds#HasProperties) not applying for a complex edge case
 
 ## v2.6.0
 > ###### 1/9/2026
