@@ -62,7 +62,7 @@ On the server:
 local monsterChar = workspace.Monster
 
 Animations:Register(monsterChar, "Monster") -- In order to use "Monster" animations (in AnimationIds) on this rig
-Animations:LoadAllTracks(player)
+Animations:LoadAllTracks(monsterChar)
 
 Animations:PlayTrack(monsterChar, "Run")
 ```
@@ -74,7 +74,7 @@ On the client:
 local monsterChar = workspace.Monster
 
 Animations:RegisterRig(monsterChar, "Monster") -- In order to use "Monster" animations (in AnimationIds) on this rig
-Animations:LoadAllRigTracks(player)
+Animations:LoadAllRigTracks(monsterChar)
 
 Animations:PlayRigTrack(monsterChar, "Run")
 ```
