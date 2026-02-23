@@ -1,7 +1,5 @@
 ![AnimationsLogo250x250_75%](https://github.com/wrello/Animations/assets/89281328/39310186-2e21-4358-adea-10a5538f5426)
 
-![hits](https://hits.aprilnea.com/hits?url=https://github.com/AprilNEA)
-
 # Animations
 A robust and easy to use module for playing & pre-loading animations on rigs in Roblox.
 
