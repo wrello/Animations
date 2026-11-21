@@ -3,7 +3,7 @@
 # Animations
 A robust and easy to use module for playing & pre-loading animations on rigs in Roblox.
 
-API: https://palmrisaac.github.io/Animations/ 
+API: https://wrello.github.io/Animations/ 
 
 | Install Type | Item |
 | ---          | --- |
